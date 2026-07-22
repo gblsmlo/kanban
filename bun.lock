@@ -19,7 +19,7 @@
         "@storybook/addon-docs": "10.5.0",
         "@storybook/react-vite": "10.5.0",
         "@tailwindcss/vite": "4.2.2",
-        "@tc96/biome-config": "2.2.0",
+        "@tc96/biome-config": "2.3.0",
         "@testing-library/react": "^16.3.0",
         "@types/bun": "^1.3.14",
         "@types/node": "^24.3.0",
@@ -383,7 +383,7 @@
 
     "@tailwindcss/vite": ["@tailwindcss/vite@4.2.2", "", { "dependencies": { "@tailwindcss/node": "4.2.2", "@tailwindcss/oxide": "4.2.2", "tailwindcss": "4.2.2" }, "peerDependencies": { "vite": "^5.2.0 || ^6 || ^7 || ^8" } }, "sha512-mEiF5HO1QqCLXoNEfXVA1Tzo+cYsrqV7w9Juj2wdUFyW07JRenqMG225MvPwr3ZD9N1bFQj46X7r33iHxLUW0w=="],
 
-    "@tc96/biome-config": ["@tc96/biome-config@2.2.0", "", { "peerDependencies": { "@biomejs/biome": "2.3.4" } }, "sha512-IpcviK8VMl5cm+KJ48h7ZnwwEtQ0Honaq2jPPc0GKARQzSjh/sL9wCnDPb2gkGWFUNmLA8hvqwCFS/A7BZJQsw=="],
+    "@tc96/biome-config": ["@tc96/biome-config@2.3.0", "", { "peerDependencies": { "@biomejs/biome": "2.3.4" } }, "sha512-XBd2qrdyBc/GhRG35EGxDjixul3IlWmXUJqJG+mLTw8sNcmIkl6LBLj/R5QYasUTEC5cRHQblf5iNnI3aO0PUQ=="],
 
     "@testing-library/dom": ["@testing-library/dom@10.4.1", "", { "dependencies": { "@babel/code-frame": "^7.10.4", "@babel/runtime": "^7.12.5", "@types/aria-query": "^5.0.1", "aria-query": "5.3.0", "dom-accessibility-api": "^0.5.9", "lz-string": "^1.5.0", "picocolors": "1.1.1", "pretty-format": "^27.0.2" } }, "sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg=="],
 
