@@ -10,18 +10,6 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: .bun-version
-      - run: bun install --frozen-lockfile
-      - run: bun run toolchain:check
-      - run: bun run lint:ci
-      - run: bun run typecheck
-      - run: bun test
-      - run: bun run build
+    uses: gblsmlo/github-workflows/.github/workflows/bun-library-ci.yml@v1.0.0
+    with:
+      build-storybook: true
