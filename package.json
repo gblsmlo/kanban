@@ -28,6 +28,8 @@
   },
   "files": [
     "dist",
+    "registry",
+    "registry.json",
     "README.md",
     "LICENSE"
   ],
@@ -40,7 +42,9 @@
     "./core": {
       "types": "./dist/core.d.ts",
       "import": "./dist/core.js"
-    }
+    },
+    "./registry": "./registry/kanban.json",
+    "./registry/kanban.json": "./registry/kanban.json"
   },
   "scripts": {
     "build": "bun run clean && bun build ./src/index.ts ./src/core.ts --outdir ./dist --target browser --format esm --packages external && tsc -p tsconfig.build.json",

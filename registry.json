@@ -1,0 +1,100 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "tc96-kanban",
+  "homepage": "https://github.com/gblsmlo/kanban#readme",
+  "items": [
+    {
+      "name": "kanban",
+      "type": "registry:block",
+      "title": "Kanban",
+      "description": "Domain-neutral Kanban pattern for React applications.",
+      "files": [
+        {
+          "path": "src/components/badge.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/components/badge.tsx"
+        },
+        {
+          "path": "src/components/card.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/components/card.tsx"
+        },
+        {
+          "path": "src/components/scroll-area.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/components/scroll-area.tsx"
+        },
+        {
+          "path": "src/components/text.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/components/text.tsx"
+        },
+        {
+          "path": "src/index.ts",
+          "type": "registry:component",
+          "target": "@components/patterns/kanban/index.ts"
+        },
+        {
+          "path": "src/kanban/components/kanban-badge.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/kanban/components/kanban-badge.tsx"
+        },
+        {
+          "path": "src/kanban/components/kanban-card.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/kanban/components/kanban-card.tsx"
+        },
+        {
+          "path": "src/kanban/components/kanban-column.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/kanban/components/kanban-column.tsx"
+        },
+        {
+          "path": "src/kanban/components/kanban-stage-selector.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/kanban/components/kanban-stage-selector.tsx"
+        },
+        {
+          "path": "src/kanban/components/kanban-view.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/kanban/components/kanban-view.tsx"
+        },
+        {
+          "path": "src/kanban/components/sortable-kanban-card.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/kanban/components/sortable-kanban-card.tsx"
+        },
+        {
+          "path": "src/kanban/hooks/use-active-column-id.ts",
+          "type": "registry:hook",
+          "target": "@components/patterns/kanban/kanban/hooks/use-active-column-id.ts"
+        },
+        {
+          "path": "src/kanban/hooks/use-kanban-drag-and-drop.ts",
+          "type": "registry:hook",
+          "target": "@components/patterns/kanban/kanban/hooks/use-kanban-drag-and-drop.ts"
+        },
+        {
+          "path": "src/kanban/index.ts",
+          "type": "registry:component",
+          "target": "@components/patterns/kanban/kanban/index.ts"
+        },
+        {
+          "path": "src/kanban/lib/drag-and-drop.ts",
+          "type": "registry:lib",
+          "target": "@components/patterns/kanban/kanban/lib/drag-and-drop.ts"
+        },
+        {
+          "path": "src/kanban/types.ts",
+          "type": "registry:lib",
+          "target": "@components/patterns/kanban/kanban/types.ts"
+        },
+        {
+          "path": "src/lib/utils.ts",
+          "type": "registry:lib",
+          "target": "@components/patterns/kanban/lib/utils.ts"
+        }
+      ]
+    }
+  ]
+}
