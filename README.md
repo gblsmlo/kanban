@@ -31,17 +31,36 @@ change the domain-neutral contract.
 
 ## Installation
 
-Until the first registry release, install directly from GitHub:
+Install the published package with your package manager:
 
 ```bash
-bun add github:gblsmlo/kanban
+pnpm add @tc96/kanban
+# or: bun add @tc96/kanban
+# or: npm install @tc96/kanban
 ```
 
 The consumer must already provide the peer dependencies:
 
 ```bash
-bun add react react-dom @base-ui/react tailwindcss
+pnpm add react react-dom @base-ui/react tailwindcss
 ```
+
+### COSS source location
+
+`@tc96/kanban` is installed from npm and imported from `node_modules`. It does
+not need a `components.json`. Add that file only when the consuming app uses the
+COSS/shadcn CLI. Map the `ui` alias to `components/patterns` so COSS primitives
+are owned by the app in that directory:
+
+```json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "tsx": true,
+  "aliases": { "ui": "@/components/patterns" }
+}
+```
+
+Then run `pnpm dlx shadcn@latest add @coss/ui` (or the Bun/npm equivalent).
 
 Tailwind must scan the installed package and your theme must expose the standard
 COSS semantic tokens:
