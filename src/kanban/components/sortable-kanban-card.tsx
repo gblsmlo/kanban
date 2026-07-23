@@ -31,6 +31,7 @@ export function SortableKanbanCard({ children, columnId, dragLabel, id }: Sortab
     <section
       aria-label={dragLabel}
       className="relative touch-none cursor-grab rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+      data-kanban-card-draggable=""
       ref={setNodeRef}
       style={style}
       {...dragAttributes}

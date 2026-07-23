@@ -15,6 +15,7 @@ remote state, mutations, navigation, and persistence.
 - consumer-controlled move acceptance and rollback
 - read-only mode when `onMoveCard` is omitted
 - responsive desktop board and mobile stage selector
+- horizontal desktop scrolling by clicking, holding, and dragging the board
 - minimal drag motion and a dedicated overlay
 - COSS visual primitives implemented on Base UI
 
