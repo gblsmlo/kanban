@@ -8,3 +8,7 @@ move.
 The consumer owns card content, stage meaning, authorization, navigation,
 remote state, mutations, and persistence. Omitting `onMoveCard` makes the board
 read-only. Ordering within the same column remains consumer/server-owned.
+
+When a sortable card contains an interactive action, its first button or link
+becomes the keyboard drag activator so the item remains a single `Tab` stop.
+`Space` starts dragging and `Enter` preserves the control action.
