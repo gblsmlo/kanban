@@ -4,6 +4,9 @@ import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area'
 import type React from 'react'
 import { cn } from '../lib/utils'
 
+type ScrollAreaViewportProps = ScrollAreaPrimitive.Viewport.Props &
+  Partial<Record<`data-${string}`, string>>
+
 export function ScrollArea({
   className,
   children,
@@ -11,13 +14,17 @@ export function ScrollArea({
   scrollbarGutter = false,
   fill = false,
   clampContentMinWidth = true,
+  viewportProps,
   ...props
 }: ScrollAreaPrimitive.Root.Props & {
   scrollFade?: boolean
   scrollbarGutter?: boolean
   fill?: boolean
   clampContentMinWidth?: boolean
+  viewportProps?: ScrollAreaViewportProps
 }): React.ReactElement {
+  const { className: viewportClassName, ...otherViewportProps } = viewportProps ?? {}
+
   return (
     <ScrollAreaPrimitive.Root className={cn('size-full min-h-0', className)} {...props}>
       <ScrollAreaPrimitive.Viewport
@@ -26,8 +33,10 @@ export function ScrollArea({
           scrollFade &&
             'mask-t-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-y-start)))] mask-b-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-y-end)))] mask-l-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-x-start)))] mask-r-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-x-end)))] [--fade-size:1.5rem]',
           scrollbarGutter && 'data-has-overflow-y:pe-2.5 data-has-overflow-x:pb-2.5',
+          viewportClassName,
         )}
         data-slot="scroll-area-viewport"
+        {...otherViewportProps}
       >
         <ScrollAreaPrimitive.Content
           className={cn(fill && 'size-full')}

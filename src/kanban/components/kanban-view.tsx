@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { ScrollArea } from '../../components/scroll-area'
 
 import { useActiveColumnId } from '../hooks/use-active-column-id'
+import { useHorizontalDragScroll } from '../hooks/use-horizontal-drag-scroll'
 import { useKanbanDragAndDrop } from '../hooks/use-kanban-drag-and-drop'
 import type { KanbanCardMove, KanbanColumnData, KanbanStageOption } from '../types'
 import { KanbanColumn } from './kanban-column'
@@ -40,6 +41,7 @@ export function KanbanView<TCard>({
     sensors,
     visibleColumns,
   } = useKanbanDragAndDrop({ columns, getKey, onMoveCard })
+  const { isDragging: isBoardDragging, viewportProps } = useHorizontalDragScroll()
   const stageOptions = useMemo(() => createStageOptions(columns), [columns])
   const activeColumn = useMemo(
     () => visibleColumns.find((column) => column.id === activeColumnId) ?? visibleColumns[0],
@@ -78,7 +80,17 @@ export function KanbanView<TCard>({
             ) : null}
           </div>
 
-          <ScrollArea className="hidden min-h-0 flex-1 md:block" fill scrollbarGutter scrollFade>
+          <ScrollArea
+            className="hidden min-h-0 flex-1 md:block"
+            fill
+            scrollbarGutter
+            scrollFade
+            viewportProps={{
+              ...viewportProps,
+              className: isBoardDragging ? 'cursor-grabbing select-none' : 'cursor-grab',
+              'data-kanban-board-viewport': '',
+            }}
+          >
             <div className="grid h-full min-h-full w-max auto-cols-[minmax(19rem,22rem)] grid-flow-col gap-2">
               {visibleColumns.map((column) => (
                 <KanbanColumn column={column} key={column.id} {...columnProps} />
