@@ -126,6 +126,10 @@ export function Board({
 Omit `onMoveCard` to render a read-only board. Returning `false` from the
 callback rejects the interaction and restores the previous view.
 
+For sortable cards with an interactive action, the first button or link is also
+the keyboard drag activator. Press `Space` to drag or `Enter` to keep the
+control's normal action without adding a second `Tab` stop.
+
 Use `@tc96/kanban/core` when a non-visual layer only needs the public types
 and drag-and-drop calculation helpers.
 
