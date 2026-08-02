@@ -65,7 +65,7 @@ const cards: ExampleCard[] = [
     labels: ['API'],
     priority: 'High',
     summary: 'Describe the data and callbacks owned by the consumer.',
-    tag: 'API',
+    tag: 'API contract requiring backwards-compatible migration planning',
   },
   {
     assignee: 'Bruno',
@@ -253,8 +253,18 @@ function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
     <KanbanCard>
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
-          <p className="font-medium text-sm">{card.label}</p>
-          <KanbanBadge>{card.tag}</KanbanBadge>
+          <p className="min-w-0 font-medium text-sm">{card.label}</p>
+          <div
+            className="min-w-0 max-w-[50%]"
+            data-long-tag={card.tag.length > 20 ? '' : undefined}
+            title={card.tag}
+          >
+            <KanbanBadge className="max-w-full overflow-hidden">
+              <span className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                {card.tag}
+              </span>
+            </KanbanBadge>
+          </div>
         </div>
         <p className="text-muted-foreground text-xs leading-5">{card.summary}</p>
       </div>
@@ -535,6 +545,18 @@ export const Board: Story = {
       'Mover card Validate keyboard drag',
       'Mover card Document composition',
     ])
+
+    const longTag = canvasElement.querySelector<HTMLElement>('[data-long-tag]')!
+    const card = longTag.closest<HTMLElement>('[data-slot="card"]')!
+    const column = longTag.closest<HTMLElement>('section[aria-labelledby]')!
+
+    await expect(longTag.title).toBe(cards[0]!.tag)
+    await expect(card.getBoundingClientRect().width).toBeLessThanOrEqual(
+      column.getBoundingClientRect().width,
+    )
+    await expect(longTag.getBoundingClientRect().width).toBeLessThanOrEqual(
+      card.getBoundingClientRect().width,
+    )
 
     const settings = canvas.getAllByRole('button', { name: 'Configurar seção Backlog' })[0]!
     const add = canvas.getAllByRole('button', { name: 'Adicionar item à seção Backlog' })[0]!

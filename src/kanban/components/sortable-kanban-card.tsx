@@ -74,9 +74,11 @@ export function SortableKanbanCard({
     <section
       aria-label={dragLabel}
       className={cn(
-        'relative touch-none cursor-grab rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing',
+        'relative min-w-0 max-w-full touch-none rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'cursor-grab active:cursor-grabbing',
         isDragSource && 'opacity-0',
       )}
+      data-kanban-card-container=""
       data-kanban-card-draggable=""
       ref={setWrapperRef}
     >
