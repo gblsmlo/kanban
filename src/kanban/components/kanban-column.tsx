@@ -159,7 +159,7 @@ export function KanbanColumn<TCard>({
         className,
       )}
     >
-      <KanbanColumnHeader actions={actions} column={column} titleId={titleId} />
+      <KanbanColumnHeader column={column} titleId={titleId} {...(actions ? { actions } : {})} />
 
       <ScrollArea className="min-h-0 flex-1" fill scrollbarGutter scrollFade>
         <div
@@ -169,11 +169,11 @@ export function KanbanColumn<TCard>({
           <KanbanColumnCards
             column={column}
             emptyLabel={emptyLabel}
-            getCardDragId={getCardDragId}
             getCardLabel={getCardLabel}
             getKey={getKey}
             renderCard={renderCard}
             sortableCards={sortableCards}
+            {...(getCardDragId ? { getCardDragId } : {})}
           />
         </div>
       </ScrollArea>

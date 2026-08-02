@@ -81,10 +81,9 @@ export function projectKanbanColumns<TCard>(
   getCardDragId: (card: TCard) => DragIdentifier,
 ): KanbanColumnData<TCard>[] {
   const target = event.operation.target
+  const { columnId, type: targetType } = target?.data ?? {}
   const targetColumnId =
-    target?.data.type === 'column' && typeof target.data.columnId === 'string'
-      ? target.data.columnId
-      : undefined
+    targetType === 'column' && typeof columnId === 'string' ? columnId : undefined
   const collectionKeys = new Map<string, string>()
   const collections = Object.fromEntries(
     columns.map((column) => {
@@ -126,8 +125,9 @@ export function resolveKanbanCardMove<TCard>(
   getCardDragId: (card: TCard) => DragIdentifier,
 ): KanbanCardMove<TCard> | undefined {
   const source = event.operation.source
+  const { type: sourceType } = source?.data ?? {}
 
-  if (event.canceled || !source || source.data.type !== 'card') return undefined
+  if (event.canceled || !source || sourceType !== 'card') return undefined
 
   const cardDragId = String(source.id)
   const sourceLocation = findCardLocation(sourceColumns, cardDragId, getCardDragId)

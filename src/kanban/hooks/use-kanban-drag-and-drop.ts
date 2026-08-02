@@ -70,8 +70,10 @@ export function useKanbanDragAndDrop<TCard>({
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
       const { source, target } = event.operation
+      const { type: sourceType } = source?.data ?? {}
+      const { type: targetType } = target?.data ?? {}
 
-      if (!onMoveCard || source?.data.type !== 'card' || target?.data.type !== 'column') {
+      if (!onMoveCard || sourceType !== 'card' || targetType !== 'column') {
         return
       }
 
@@ -115,7 +117,7 @@ export function useKanbanDragAndDrop<TCard>({
         cardDragId: String(event.operation.source?.id),
         requestId,
         targetColumnId: move.targetColumnId,
-        targetIndex: move.targetIndex,
+        ...(move.targetIndex === undefined ? {} : { targetIndex: move.targetIndex }),
       }
       const suspension = event.suspend()
 

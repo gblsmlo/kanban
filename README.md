@@ -1,7 +1,9 @@
 # Kanban
 
-A domain-neutral, accessible Kanban view for React applications built with
+A domain-neutral collection view package for React applications built with
 [COSS](https://github.com/cosscom/coss) primitives, DnD Kit, and Tailwind CSS.
+The package keeps its current name while the `0.4.0` API introduces List beside
+the existing Kanban.
 
 The package provides the interaction and presentation layer for SaaS board
 views. Your application remains responsible for business stages, permissions,
@@ -10,6 +12,8 @@ remote state, mutations, navigation, and persistence.
 ## Highlights
 
 - generic typed columns and consumer-rendered cards
+- collection provider with controlled or uncontrolled view preferences
+- grouped List view with Status and Assignee projections
 - accessible card skeleton for consumer loading states
 - consumer-controlled full and compact card presentations
 - accessible pointer and keyboard drag-and-drop with the current DnD Kit React API
@@ -35,12 +39,11 @@ depends on its Base UI internals. The source registry does not copy those files
 into the pattern. It declares the official COSS registry dependencies so the
 consumer receives them through its configured `ui` alias.
 
-The view composes the canonical COSS `Badge`, `Button`, `Card`, `ScrollArea`,
-`Skeleton`, and `Tooltip` primitives. The npm build bundles their
-copy-owned source. The source registry instead declares `@coss/badge`,
-`@coss/button`, `@coss/card`, `@coss/scroll-area`, `@coss/skeleton`, and
-`@coss/tooltip`, installing them at `@/components/ui/*` through the consumer's
-`ui` alias.
+The views compose the canonical COSS `Badge`, `Button`, `Card`, `Collapsible`,
+`Empty`, `Menu`, `ScrollArea`, `Skeleton`, `Toolbar`, and `Tooltip` primitives.
+The npm build bundles their copy-owned source. The source registry instead
+declares the matching `@coss/*` items, installing them at
+`@/components/ui/*` through the consumer's `ui` alias.
 
 ## Installation
 
@@ -162,6 +165,71 @@ other task data; reserve the footer for metadata such as assignee or date.
 Consumers may adjust typography on `KanbanCardTitle` or
 `KanbanCardDescription`, while the sections retain their spacing and structure.
 
+### Collection provider and List
+
+The `0.4.0` collection API accepts consumer models through adapters. Status and
+assignee are required capabilities, but the package does not require properties
+with those names:
+
+```tsx
+import {
+  CollectionProvider,
+  CollectionSettingsMenu,
+  CollectionToolbar,
+  CollectionToolbarGroup,
+  CollectionViewOutlet,
+  ListItem,
+  ListItemHeader,
+  ListItemTitle,
+  ListView,
+} from "@tc96/kanban";
+
+export function TaskList({ tasks, statuses, assignees }: Props) {
+  return (
+    <CollectionProvider
+      collection={{
+        assignees,
+        getAssigneeId: (task) => task.ownerId,
+        getKey: (task) => task.id,
+        getLabel: (task) => task.title,
+        getStatusId: (task) => task.stageId,
+        items: tasks,
+        statuses,
+      }}
+      defaultPreferences={{ groupBy: "status", view: "list" }}
+    >
+      {({ collection }) => (
+        <>
+          <CollectionToolbar>
+            <CollectionToolbarGroup>
+              <CollectionSettingsMenu />
+            </CollectionToolbarGroup>
+          </CollectionToolbar>
+          <CollectionViewOutlet
+            collection={collection}
+            renderKanbanItem={(task) => <TaskCard task={task} />}
+            renderListItem={(task) => (
+              <ListItem aria-label={task.title}>
+                <ListItemHeader>
+                  <ListItemTitle>{task.title}</ListItemTitle>
+                </ListItemHeader>
+              </ListItem>
+            )}
+          />
+        </>
+      )}
+    </CollectionProvider>
+  );
+}
+```
+
+`CollectionSettingsMenu` exposes `View → Grid | List` and
+`Grouping by → Status | Assignee`. Both controls update the same
+provider preferences synchronously. The provider supports
+`preferences`/`onPreferencesChange` for controlled persistence and
+`defaultPreferences` for local state. The package never writes to storage, URL
+state, or a remote cache.
+
 ### Card display modes
 
 `KanbanCard` defaults to the existing `full` presentation. Set its controlled
@@ -172,7 +240,6 @@ the control outside draggable cards, such as in the board toolbar settings:
 ```tsx
 import {
   KanbanCard,
-  KanbanCardCompactMetadata,
   KanbanCardContent,
   KanbanCardDescription,
   KanbanCardFooter,
@@ -193,7 +260,7 @@ export function TaskCard({
       <KanbanCardHeader>
         <KanbanCardTitle>{task.title}</KanbanCardTitle>
         <KanbanCardDescription>{task.description}</KanbanCardDescription>
-        <KanbanCardCompactMetadata date={task.date} tags={task.tags} />
+        {display === "compact" ? <TaskCompactMetadata task={task} /> : null}
       </KanbanCardHeader>
       <KanbanCardContent>{/* Full tags */}</KanbanCardContent>
       <KanbanCardFooter>{/* Assignee and date */}</KanbanCardFooter>
@@ -202,14 +269,11 @@ export function TaskCard({
 }
 ```
 
-The toolbar in Storybook demonstrates a board-wide `Detailed` or `Compact`
+Compact metadata is consumer-owned composition. The toolbar in Storybook
+demonstrates a board-wide `Detailed` or `Compact`
 setting under `Settings → Layout → Cards`. The same Layout group includes
 consumer-owned mocks for column width, swimlane grouping, and expanded-column
 visibility.
-Compact metadata keeps the order title, tags, and date without adding a card
-action. The date stays visible beside the tag count; hovering or focusing the
-tag count opens the COSS tooltip with every tag. Supply `label`, `tagsLabel`, and
-`dateLabel` when the defaults do not match the product locale.
 
 `getColumnActions` enables the settings and add controls independently for each
 column. The package renders accessible icon buttons and reports the logical

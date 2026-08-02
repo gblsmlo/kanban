@@ -1,3 +1,13 @@
+export { projectCollection } from './collection/lib/project-collection'
+export type {
+  CollectionDefinition,
+  CollectionGroup,
+  CollectionGrouping,
+  CollectionOption,
+  CollectionPreferences,
+  CollectionView,
+  CollectionViewMode,
+} from './collection/types'
 export {
   createCardDragId,
   createColumnDropId,
