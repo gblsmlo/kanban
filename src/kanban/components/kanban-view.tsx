@@ -7,7 +7,12 @@ import { cn } from '../../lib/utils'
 import { useActiveColumnId } from '../hooks/use-active-column-id'
 import { useHorizontalDragScroll } from '../hooks/use-horizontal-drag-scroll'
 import { useKanbanDragAndDrop } from '../hooks/use-kanban-drag-and-drop'
-import type { KanbanCardMove, KanbanColumnData, KanbanStageOption } from '../types'
+import type {
+  KanbanCardMove,
+  KanbanColumnActions,
+  KanbanColumnData,
+  KanbanStageOption,
+} from '../types'
 import { KanbanColumn } from './kanban-column'
 import { KanbanStageSelector } from './kanban-stage-selector'
 
@@ -16,6 +21,7 @@ export interface KanbanViewProps<TCard = unknown> {
   renderCard: (card: TCard) => ReactNode
   getKey: (card: TCard) => string | number
   getCardLabel?: (card: TCard) => string
+  getColumnActions?: (column: KanbanColumnData<TCard>) => KanbanColumnActions | undefined
   emptyColumnLabel?: string
   mobileStageHint?: string
   onMoveCard?: (move: KanbanCardMove<TCard>) => boolean | Promise<boolean>
@@ -26,6 +32,7 @@ export function KanbanView<TCard>({
   renderCard,
   getKey,
   getCardLabel,
+  getColumnActions,
   emptyColumnLabel,
   mobileStageHint,
   onMoveCard,
@@ -82,7 +89,12 @@ export function KanbanView<TCard>({
 
           <div className="grid min-h-0 flex-1 gap-2 md:hidden">
             {activeColumn ? (
-              <KanbanColumn column={activeColumn} {...columnProps} sortableCards={false} />
+              <KanbanColumn
+                actions={getColumnActions?.(activeColumn)}
+                column={activeColumn}
+                {...columnProps}
+                sortableCards={false}
+              />
             ) : null}
           </div>
 
@@ -111,7 +123,12 @@ export function KanbanView<TCard>({
               key={reconciliationKey}
             >
               {visibleColumns.map((column) => (
-                <KanbanColumn column={column} key={column.id} {...columnProps} />
+                <KanbanColumn
+                  actions={getColumnActions?.(column)}
+                  column={column}
+                  key={column.id}
+                  {...columnProps}
+                />
               ))}
             </div>
           </ScrollArea>

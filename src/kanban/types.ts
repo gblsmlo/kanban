@@ -5,6 +5,15 @@ export interface KanbanColumnData<TCard = unknown> {
   cards: TCard[]
 }
 
+export interface KanbanColumnActions {
+  /** Accessible label for the add action. Defaults to a label containing the column title. */
+  addLabel?: string
+  /** Accessible label for the settings action. Defaults to a label containing the column title. */
+  settingsLabel?: string
+  onAddCard?: (columnId: string) => void
+  onOpenSettings?: (columnId: string) => void
+}
+
 export interface KanbanCardMove<TCard = unknown> {
   card: TCard
   cardId: string

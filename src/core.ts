@@ -7,4 +7,9 @@ export {
   projectKanbanColumns,
   resolveKanbanCardMove,
 } from './kanban/lib/drag-and-drop'
-export type { KanbanCardMove, KanbanColumnData, KanbanStageOption } from './kanban/types'
+export type {
+  KanbanCardMove,
+  KanbanColumnActions,
+  KanbanColumnData,
+  KanbanStageOption,
+} from './kanban/types'

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'bun:test'
+import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { DragDropProvider } from '@dnd-kit/react'
 
 await import('../../test/dom')
@@ -34,6 +34,40 @@ const emptyColumn = {
 }
 
 describe('Kanban accessibility', () => {
+  test('renders optional per-column actions and identifies their column', async () => {
+    const onAddCard = mock(() => undefined)
+    const onOpenSettings = mock(() => undefined)
+    const columns = [emptyColumn, { ...emptyColumn, id: 'done', title: 'Done' }]
+
+    render(
+      <KanbanView
+        columns={columns}
+        getColumnActions={(column) =>
+          column.id === 'backlog' ? { onAddCard, onOpenSettings } : undefined
+        }
+        getKey={(card) => String(card)}
+        renderCard={String}
+      />,
+    )
+    await act(async () => undefined)
+
+    const settings = screen.getAllByRole('button', { name: 'Configurar seção Backlog' })[0]!
+    const add = screen.getAllByRole('button', { name: 'Adicionar item à seção Backlog' })[0]!
+
+    expect(screen.queryByRole('button', { name: 'Configurar seção Done' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Adicionar item à seção Done' })).toBeNull()
+
+    settings.focus()
+    expect(document.activeElement).toBe(settings)
+    fireEvent.click(settings)
+    add.focus()
+    expect(document.activeElement).toBe(add)
+    fireEvent.click(add)
+
+    expect(onOpenSettings).toHaveBeenCalledWith('backlog')
+    expect(onAddCard).toHaveBeenCalledWith('backlog')
+  })
+
   test('creates unique heading ids for duplicate responsive column instances', async () => {
     render(
       <DragDropProvider>

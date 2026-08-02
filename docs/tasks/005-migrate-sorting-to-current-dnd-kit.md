@@ -1,5 +1,7 @@
 # Migrar a ordenação para a API atual do dnd-kit
 
+**Status:** implementado no `main`; este contrato possui teste de regressão contra a API legada.
+
 ## Contexto
 
 A primeira implementação calculava manualmente o alvo antes/depois, mantinha
