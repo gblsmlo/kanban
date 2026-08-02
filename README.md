@@ -116,14 +116,26 @@ type RecordItem = {
 export function Board({
   columns,
   moveRecord,
+  openCreateForm,
+  openColumnSettings,
 }: {
   columns: KanbanColumnData<RecordItem>[];
   moveRecord: (move: KanbanCardMove<RecordItem>) => boolean | Promise<boolean>;
+  openCreateForm: (columnId: string) => void;
+  openColumnSettings: (columnId: string) => void;
 }) {
   return (
     <KanbanView
       columns={columns}
       getCardLabel={(record) => record.title}
+      getColumnActions={(column) =>
+        column.id === "backlog"
+          ? {
+              onAddCard: (columnId) => openCreateForm(columnId),
+              onOpenSettings: (columnId) => openColumnSettings(columnId),
+            }
+          : undefined
+      }
       getKey={(record) => record.id}
       onMoveCard={moveRecord}
       renderCard={(record) => (
@@ -135,6 +147,13 @@ export function Board({
   );
 }
 ```
+
+`getColumnActions` enables the settings and add controls independently for each
+column. The package renders accessible icon buttons and reports the logical
+column id; the consumer owns permissions, menu or form content, mutations, and
+persistence. Omit it, return `undefined`, or omit either callback to keep that
+action out of the column header. Use `settingsLabel` and `addLabel` when the
+default Portuguese accessible labels do not match the product locale.
 
 Omit `onMoveCard` to render a read-only board. Returning or resolving `false`
 rejects the interaction and restores the previous view. A rejected optimistic
