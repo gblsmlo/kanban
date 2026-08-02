@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Badge } from '../../components/badge'
+import { Badge } from '@/components/ui/badge'
 
 export interface KanbanBadgeProps {
   children: ReactNode

@@ -13,9 +13,12 @@ consumer owns ordering rules and persistence.
 Use `KanbanCardSkeleton` when a consumer has not loaded card data yet. The
 placeholder is passive, keeps the card surface stable, and communicates its
 loading state with `role="status"` and `aria-busy="true"` without requiring a
-fake domain card. Its visual placeholders come from COSS `ui/skeleton`; the
-source registry declares `@coss/skeleton` so the consumer owns that primitive
-through the configured `ui` alias.
+fake domain card.
+
+All visual dependencies cross the COSS boundary at `@/components/ui/*`. The
+source registry installs `badge`, `button`, `card`, `scroll-area`, and
+`skeleton` from `@coss/*`, so the consumer owns those primitives through the
+configured `ui` alias and the Kanban pattern never imports Base UI directly.
 
 `onMoveCard` may return `boolean` or `Promise<boolean>`. While an asynchronous
 decision is pending, Kanban keeps its optimistic preview across stale

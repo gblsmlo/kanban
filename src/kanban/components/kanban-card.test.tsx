@@ -19,9 +19,9 @@ describe('KanbanCard', () => {
     const card = screen.getByTestId('card')
 
     expect(card.tagName).toBe('ARTICLE')
+    expect(card.getAttribute('data-slot')).toBe('card')
     expect(card.className).toContain('audit-marker')
     expect(card.className).toContain('opacity-70')
-    expect(card.getAttribute('data-density')).toBe('sm')
   })
 
   test('applies layout overrides to the content slot', () => {

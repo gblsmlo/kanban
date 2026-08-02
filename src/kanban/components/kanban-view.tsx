@@ -1,7 +1,7 @@
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
-import { ScrollArea } from '../../components/scroll-area'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 import { useActiveColumnId } from '../hooks/use-active-column-id'
 import { useHorizontalDragScroll } from '../hooks/use-horizontal-drag-scroll'
@@ -39,7 +39,7 @@ export function KanbanView<TCard>({
     reconciliationKey,
     visibleColumns,
   } = useKanbanDragAndDrop({ columns, getKey, onMoveCard })
-  const { isDragging: isBoardDragging, viewportProps } = useHorizontalDragScroll()
+  const { isDragging: isBoardDragging, rootRef } = useHorizontalDragScroll()
   const stageOptions = useMemo(() => createStageOptions(columns), [columns])
   const cardsByDragId = useMemo(
     () =>
@@ -85,19 +85,20 @@ export function KanbanView<TCard>({
           </div>
 
           <ScrollArea
-            className="hidden min-h-0 flex-1 md:block"
+            className={
+              cardDragEnabled
+                ? `hidden min-h-0 flex-1 md:block [&_[data-slot=scroll-area-viewport]]:select-none ${
+                    isBoardDragging
+                      ? '[&_[data-slot=scroll-area-viewport]]:cursor-grabbing'
+                      : '[&_[data-slot=scroll-area-viewport]]:cursor-grab'
+                  }`
+                : 'hidden min-h-0 flex-1 md:block [&_[data-slot=scroll-area-viewport]]:cursor-default'
+            }
+            data-kanban-board-scroll-area=""
             fill
+            ref={cardDragEnabled ? rootRef : undefined}
             scrollbarGutter
             scrollFade
-            viewportProps={{
-              ...(cardDragEnabled ? viewportProps : {}),
-              className: cardDragEnabled
-                ? isBoardDragging
-                  ? 'cursor-grabbing select-none'
-                  : 'cursor-grab'
-                : 'cursor-default',
-              'data-kanban-board-viewport': '',
-            }}
           >
             <div
               className="grid h-full min-h-full w-max auto-cols-[minmax(19rem,22rem)] grid-flow-col gap-2"

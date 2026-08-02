@@ -1,5 +1,4 @@
-import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const DRAG_THRESHOLD = 8
 const CLICK_SUPPRESSION_WINDOW_MS = 500
@@ -41,102 +40,106 @@ export function useHorizontalDragScroll() {
   const dragOriginRef = useRef<DragOrigin | null>(null)
   const releasedDragRef = useRef<ReleasedDrag | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [rootElement, setRootElement] = useState<HTMLDivElement | null>(null)
 
   const resetDrag = useCallback(() => {
     dragOriginRef.current = null
     setIsDragging(false)
   }, [])
 
-  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0 || !event.isPrimary || isExcludedTarget(event.target)) return
+  useEffect(() => {
+    const viewport = rootElement?.querySelector<HTMLDivElement>(
+      '[data-slot="scroll-area-viewport"]',
+    )
+    if (!viewport) return
 
-    releasedDragRef.current = null
-    dragOriginRef.current = {
-      dragging: false,
-      pointerId: event.pointerId,
-      scrollLeft: event.currentTarget.scrollLeft,
-      x: event.clientX,
-      y: event.clientY,
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.button !== 0 || !event.isPrimary || isExcludedTarget(event.target)) return
+
+      releasedDragRef.current = null
+      dragOriginRef.current = {
+        dragging: false,
+        pointerId: event.pointerId,
+        scrollLeft: viewport.scrollLeft,
+        x: event.clientX,
+        y: event.clientY,
+      }
     }
-  }, [])
 
-  const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    const origin = dragOriginRef.current
-    if (!origin || origin.pointerId !== event.pointerId) return
+    const handlePointerMove = (event: PointerEvent) => {
+      const origin = dragOriginRef.current
+      if (!origin || origin.pointerId !== event.pointerId) return
 
-    const deltaX = event.clientX - origin.x
-    const deltaY = event.clientY - origin.y
+      const deltaX = event.clientX - origin.x
+      const deltaY = event.clientY - origin.y
 
-    if (!origin.dragging) {
-      if (Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) return
-      if (Math.abs(deltaX) <= Math.abs(deltaY)) {
-        dragOriginRef.current = null
-        return
+      if (!origin.dragging) {
+        if (Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) return
+        if (Math.abs(deltaX) <= Math.abs(deltaY)) {
+          dragOriginRef.current = null
+          return
+        }
+
+        origin.dragging = true
+        viewport.setPointerCapture?.(event.pointerId)
+        setIsDragging(true)
       }
 
-      origin.dragging = true
-      event.currentTarget.setPointerCapture?.(event.pointerId)
-      setIsDragging(true)
+      event.preventDefault()
+      const maximumScrollLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth)
+      viewport.scrollLeft = Math.min(maximumScrollLeft, Math.max(0, origin.scrollLeft - deltaX))
     }
 
-    event.preventDefault()
-    const maximumScrollLeft = Math.max(
-      0,
-      event.currentTarget.scrollWidth - event.currentTarget.clientWidth,
-    )
-    event.currentTarget.scrollLeft = Math.min(
-      maximumScrollLeft,
-      Math.max(0, origin.scrollLeft - deltaX),
-    )
-  }, [])
-
-  const handlePointerEnd = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
+    const handlePointerEnd = (event: PointerEvent) => {
       const origin = dragOriginRef.current
       if (!origin || origin.pointerId !== event.pointerId) return
 
       if (origin.dragging) {
-        releasedDragRef.current = {
-          at: Date.now(),
-          x: event.clientX,
-          y: event.clientY,
-        }
-        if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-          event.currentTarget.releasePointerCapture(event.pointerId)
+        releasedDragRef.current = { at: Date.now(), x: event.clientX, y: event.clientY }
+        if (viewport.hasPointerCapture?.(event.pointerId)) {
+          viewport.releasePointerCapture(event.pointerId)
         }
       }
 
       resetDrag()
-    },
-    [resetDrag],
-  )
-
-  const handleClickCapture = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
-    const releasedDrag = releasedDragRef.current
-    if (!releasedDrag) return
-
-    releasedDragRef.current = null
-    const isReleasedDragClick =
-      Date.now() - releasedDrag.at <= CLICK_SUPPRESSION_WINDOW_MS &&
-      Math.abs(event.clientX - releasedDrag.x) <= 1 &&
-      Math.abs(event.clientY - releasedDrag.y) <= 1
-
-    if (isReleasedDragClick) {
-      event.preventDefault()
-      event.stopPropagation()
     }
-  }, [])
+
+    const handleClickCapture = (event: MouseEvent) => {
+      const releasedDrag = releasedDragRef.current
+      if (!releasedDrag) return
+
+      releasedDragRef.current = null
+      const isReleasedDragClick =
+        Date.now() - releasedDrag.at <= CLICK_SUPPRESSION_WINDOW_MS &&
+        Math.abs(event.clientX - releasedDrag.x) <= 1 &&
+        Math.abs(event.clientY - releasedDrag.y) <= 1
+
+      if (isReleasedDragClick) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+    }
+
+    viewport.addEventListener('click', handleClickCapture, true)
+    viewport.addEventListener('lostpointercapture', resetDrag)
+    viewport.addEventListener('pointercancel', handlePointerEnd)
+    viewport.addEventListener('pointerdown', handlePointerDown)
+    viewport.addEventListener('pointermove', handlePointerMove)
+    viewport.addEventListener('pointerup', handlePointerEnd)
+
+    return () => {
+      dragOriginRef.current = null
+      viewport.removeEventListener('click', handleClickCapture, true)
+      viewport.removeEventListener('lostpointercapture', resetDrag)
+      viewport.removeEventListener('pointercancel', handlePointerEnd)
+      viewport.removeEventListener('pointerdown', handlePointerDown)
+      viewport.removeEventListener('pointermove', handlePointerMove)
+      viewport.removeEventListener('pointerup', handlePointerEnd)
+    }
+  }, [resetDrag, rootElement])
 
   return {
     isDragging,
-    viewportProps: {
-      'data-drag-scrolling': isDragging ? '' : undefined,
-      onClickCapture: handleClickCapture,
-      onLostPointerCapture: resetDrag,
-      onPointerCancel: handlePointerEnd,
-      onPointerDown: handlePointerDown,
-      onPointerMove: handlePointerMove,
-      onPointerUp: handlePointerEnd,
-    },
+    rootRef: setRootElement,
   }
 }

@@ -17,7 +17,7 @@ import {
 import { expect, userEvent, within } from 'storybook/test'
 import { useMemo, useState } from 'react'
 
-import { Button } from '../components/ui/button'
+import { Button } from '@/components/ui/button'
 import {
   Menu,
   MenuCheckboxItem,
@@ -32,8 +32,8 @@ import {
   MenuSubPopup,
   MenuSubTrigger,
   MenuTrigger,
-} from '../components/ui/menu'
-import { Toolbar as CossToolbar, ToolbarButton, ToolbarGroup } from '../components/ui/toolbar'
+} from '@/components/ui/menu'
+import { Toolbar as CossToolbar, ToolbarButton, ToolbarGroup } from '@/components/ui/toolbar'
 import {
   KanbanBadge,
   KanbanCard,
@@ -536,11 +536,13 @@ export const Card: CardStory = {
 
 export const ReadOnly: Story = {
   play: async ({ canvasElement }) => {
-    const viewport = canvasElement.querySelector<HTMLElement>('[data-kanban-board-viewport]')
+    const scrollArea = canvasElement.querySelector<HTMLElement>('[data-kanban-board-scroll-area]')
+    const viewport = scrollArea?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]')
 
+    await expect(scrollArea).not.toBeNull()
     await expect(viewport).not.toBeNull()
-    await expect(viewport).toHaveClass('cursor-default')
-    await expect(viewport).not.toHaveClass('cursor-grab')
+    await expect(scrollArea?.className).toContain('cursor-default')
+    await expect(scrollArea?.className).not.toContain('cursor-grab')
     await expect(canvasElement.querySelectorAll('[data-kanban-card-draggable]')).toHaveLength(0)
     await expect(window.getComputedStyle(viewport!).cursor).toBe('default')
   },

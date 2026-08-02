@@ -8,27 +8,19 @@
       "type": "registry:block",
       "title": "Kanban",
       "description": "Domain-neutral Kanban pattern for React applications.",
+      "author": "Gabriel Melo",
+      "dependencies": [
+        "@dnd-kit/abstract@0.5.0",
+        "@dnd-kit/collision@0.5.0",
+        "@dnd-kit/dom@0.5.0",
+        "@dnd-kit/helpers@0.5.0",
+        "@dnd-kit/react@0.5.0",
+        "class-variance-authority@0.7.1",
+        "clsx@2.1.1",
+        "lucide-react@1.28.0",
+        "tailwind-merge@3.6.0"
+      ],
       "files": [
-        {
-          "path": "src/components/badge.tsx",
-          "type": "registry:ui",
-          "target": "@components/patterns/kanban/components/badge.tsx"
-        },
-        {
-          "path": "src/components/card.tsx",
-          "type": "registry:ui",
-          "target": "@components/patterns/kanban/components/card.tsx"
-        },
-        {
-          "path": "src/components/scroll-area.tsx",
-          "type": "registry:ui",
-          "target": "@components/patterns/kanban/components/scroll-area.tsx"
-        },
-        {
-          "path": "src/components/text.tsx",
-          "type": "registry:ui",
-          "target": "@components/patterns/kanban/components/text.tsx"
-        },
         {
           "path": "src/index.ts",
           "type": "registry:component",
@@ -105,7 +97,23 @@
           "target": "@components/patterns/kanban/lib/utils.ts"
         }
       ],
-      "registryDependencies": ["@coss/skeleton"]
+      "registryDependencies": [
+        "@coss/badge",
+        "@coss/button",
+        "@coss/card",
+        "@coss/scroll-area",
+        "@coss/skeleton"
+      ],
+      "meta": {
+        "package": "@tc96/kanban",
+        "installPath": "@components/patterns/kanban",
+        "aliases": {
+          "components": "@/components",
+          "ui": "@/components/ui",
+          "patterns": "@/components/patterns"
+        }
+      },
+      "docs": "Install the npm package first, then add this registry item with the shadcn CLI. UI primitives are installed from the official COSS registry through aliases.ui at @/components/ui."
     }
   ]
 }

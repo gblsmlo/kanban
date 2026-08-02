@@ -1,8 +1,8 @@
-import type { ReactElement, ReactNode } from 'react'
-import { Card, CardPanel, type CardProps } from '../../components/card'
+import type { ComponentProps, ReactElement, ReactNode } from 'react'
+import { Card, CardPanel } from '@/components/ui/card'
 import { cn } from '../../lib/utils'
 
-export interface KanbanCardProps extends Omit<CardProps, 'density'> {
+export interface KanbanCardProps extends ComponentProps<typeof Card> {
   dimmed?: boolean
   contentClassName?: string
   renderContent?: boolean
@@ -19,8 +19,12 @@ export function KanbanCard({
   ...props
 }: KanbanCardProps): ReactElement {
   return (
-    <Card className={cn(dimmed && 'opacity-70', className)} density="sm" render={render} {...props}>
-      {renderContent ? <CardPanel className={contentClassName}>{children}</CardPanel> : children}
+    <Card className={cn(dimmed && 'opacity-70', className)} render={render} {...props}>
+      {renderContent ? (
+        <CardPanel className={cn('p-4', contentClassName)}>{children}</CardPanel>
+      ) : (
+        children
+      )}
     </Card>
   )
 }

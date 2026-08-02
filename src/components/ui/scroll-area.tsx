@@ -2,10 +2,7 @@
 
 import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area'
 import type React from 'react'
-import { cn } from '../lib/utils'
-
-type ScrollAreaViewportProps = ScrollAreaPrimitive.Viewport.Props &
-  Partial<Record<`data-${string}`, string>>
+import { cn } from '../../lib/utils'
 
 export function ScrollArea({
   className,
@@ -14,29 +11,27 @@ export function ScrollArea({
   scrollbarGutter = false,
   fill = false,
   clampContentMinWidth = true,
-  viewportProps,
+  overscrollContain = false,
   ...props
 }: ScrollAreaPrimitive.Root.Props & {
   scrollFade?: boolean
   scrollbarGutter?: boolean
   fill?: boolean
   clampContentMinWidth?: boolean
-  viewportProps?: ScrollAreaViewportProps
+  overscrollContain?: boolean
 }): React.ReactElement {
-  const { className: viewportClassName, ...otherViewportProps } = viewportProps ?? {}
-
   return (
     <ScrollAreaPrimitive.Root className={cn('size-full min-h-0', className)} {...props}>
       <ScrollAreaPrimitive.Viewport
         className={cn(
-          'h-full rounded-[inherit] outline-none transition-shadows focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background data-has-overflow-y:overscroll-y-contain data-has-overflow-x:overscroll-x-contain',
+          'h-full rounded-[inherit] outline-none transition-shadows focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
+          overscrollContain &&
+            'data-has-overflow-y:overscroll-y-contain data-has-overflow-x:overscroll-x-contain',
           scrollFade &&
             'mask-t-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-y-start)))] mask-b-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-y-end)))] mask-l-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-x-start)))] mask-r-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-x-end)))] [--fade-size:1.5rem]',
           scrollbarGutter && 'data-has-overflow-y:pe-2.5 data-has-overflow-x:pb-2.5',
-          viewportClassName,
         )}
         data-slot="scroll-area-viewport"
-        {...otherViewportProps}
       >
         <ScrollAreaPrimitive.Content
           className={cn(fill && 'size-full')}
