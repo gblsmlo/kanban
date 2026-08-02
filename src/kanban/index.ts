@@ -2,8 +2,10 @@ export type { KanbanBadgeProps } from './components/kanban-badge'
 export { KanbanBadge } from './components/kanban-badge'
 export type {
   KanbanCardActionProps,
+  KanbanCardCompactMetadataProps,
   KanbanCardContentProps,
   KanbanCardDescriptionProps,
+  KanbanCardDisplay,
   KanbanCardFooterProps,
   KanbanCardHeaderProps,
   KanbanCardProps,
@@ -12,6 +14,7 @@ export type {
 export {
   KanbanCard,
   KanbanCardAction,
+  KanbanCardCompactMetadata,
   KanbanCardContent,
   KanbanCardDescription,
   KanbanCardFooter,

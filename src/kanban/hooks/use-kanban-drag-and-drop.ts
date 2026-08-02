@@ -30,6 +30,7 @@ export function useKanbanDragAndDrop<TCard>({
 }: UseKanbanDragAndDropOptions<TCard>) {
   const [optimisticColumns, setOptimisticColumns] = useState<KanbanColumnData<TCard>[] | null>(null)
   const [reconciliationKey, setReconciliationKey] = useState(0)
+  const [focusCardDragId, setFocusCardDragId] = useState<string | null>(null)
   const columnsRef = useRef(columns)
   const optimisticColumnsRef = useRef<KanbanColumnData<TCard>[] | null>(null)
   const dragSourceColumnsRef = useRef<KanbanColumnData<TCard>[] | null>(null)
@@ -62,8 +63,10 @@ export function useKanbanDragAndDrop<TCard>({
   }, [columns, getCardDragId, updateOptimisticColumns])
 
   const handleDragStart = useCallback((_event: DragStartEvent) => {
+    setFocusCardDragId(null)
     dragSourceColumnsRef.current = optimisticColumnsRef.current ?? columnsRef.current
   }, [])
+  const handleCardFocusRestored = useCallback(() => setFocusCardDragId(null), [])
 
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
@@ -104,6 +107,13 @@ export function useKanbanDragAndDrop<TCard>({
         return
       }
 
+      if (move.sourceColumnId !== move.targetColumnId) {
+        // OptimisticSortingPlugin physically reparents sortable elements across
+        // groups. Remount the shared board subtree when React takes ownership
+        // so it never tries to remove the card from its former DOM parent.
+        setFocusCardDragId(String(event.operation.source?.id))
+        setReconciliationKey((current) => current + 1)
+      }
       updateOptimisticColumns(projectedColumns)
       rollbackSourceColumnsRef.current = null
       const requestId = moveRequestIdRef.current + 1
@@ -166,7 +176,9 @@ export function useKanbanDragAndDrop<TCard>({
 
   return {
     cardDragEnabled: Boolean(onMoveCard),
+    focusCardDragId,
     getCardDragId,
+    handleCardFocusRestored,
     handleDragEnd,
     handleDragOver,
     handleDragStart,

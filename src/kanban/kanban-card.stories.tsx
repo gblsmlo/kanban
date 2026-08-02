@@ -4,8 +4,10 @@ import { expect, waitFor, within } from 'storybook/test'
 import {
   KanbanBadge,
   KanbanCard,
+  KanbanCardCompactMetadata,
   KanbanCardContent,
   KanbanCardDescription,
+  type KanbanCardDisplay,
   KanbanCardFooter,
   KanbanCardHeader,
   KanbanCardSkeleton,
@@ -71,12 +73,19 @@ const cards: ExampleCard[] = [
   },
 ]
 
-function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
+function ExampleCardView({
+  card,
+  display = 'full',
+}: Readonly<{
+  card: ExampleCard
+  display?: KanbanCardDisplay
+}>) {
   return (
-    <KanbanCard>
+    <KanbanCard display={display}>
       <KanbanCardHeader>
         <KanbanCardTitle className="text-sm leading-normal">{card.label}</KanbanCardTitle>
         <KanbanCardDescription className="text-xs leading-5">{card.summary}</KanbanCardDescription>
+        <KanbanCardCompactMetadata date={card.date} tags={card.tags} />
       </KanbanCardHeader>
       <KanbanCardContent>
         <ul
@@ -106,8 +115,12 @@ function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
   )
 }
 
-function renderCard(card: ExampleCard) {
-  return <div className="w-full max-w-sm px-4 py-6">{ExampleCardView({ card })}</div>
+function renderCard(card: ExampleCard, display: KanbanCardDisplay = 'full') {
+  return (
+    <div className="w-full max-w-sm px-4 py-6">
+      <ExampleCardView card={card} display={display} />
+    </div>
+  )
 }
 
 const meta = {
@@ -119,7 +132,7 @@ export default meta
 type Story = StoryObj
 
 function expectTaglessLayout(canvasElement: HTMLElement, expectedTagCount: number) {
-  return async function () {
+  return async () => {
     const card = within(canvasElement).getByRole('article')
     const tags = within(card).getAllByRole('listitem')
 
@@ -179,4 +192,26 @@ export const Loading: Story = {
       <KanbanCardSkeleton label="Carregando card de exemplo" />
     </div>
   ),
+}
+
+export const Full: Story = {
+  render: () => renderCard(cards[3]!, 'full'),
+}
+
+export const Compact: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const metadata = canvas.getByLabelText('4 tags')
+    const card = canvas.getByRole('article')
+    const date = card.querySelector('[data-slot="kanban-card-compact-date"]')
+
+    if (!date) throw new Error('Visible compact date not found')
+
+    await expect(card).toHaveAttribute('data-display', 'compact')
+    await expect(canvas.getByText(cards[3]!.summary)).not.toBeVisible()
+    await expect(metadata).toBeVisible()
+    await expect(date).toBeVisible()
+    await expect(date).toHaveTextContent('This week')
+  },
+  render: () => renderCard(cards[3]!, 'compact'),
 }

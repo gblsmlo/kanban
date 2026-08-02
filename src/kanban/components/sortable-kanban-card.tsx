@@ -6,10 +6,10 @@ import { useCallback, useLayoutEffect, useRef } from 'react'
 import { cn } from '../../lib/utils'
 
 const ACTIONABLE_DESCENDANT_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  '[role="button"]:not([aria-disabled="true"])',
-  '[role="link"]:not([aria-disabled="true"])',
+  'a[href]:not([data-kanban-card-action])',
+  'button:not([disabled]):not([data-kanban-card-action])',
+  '[role="button"]:not([aria-disabled="true"]):not([data-kanban-card-action])',
+  '[role="link"]:not([aria-disabled="true"]):not([data-kanban-card-action])',
 ].join(',')
 
 const KANBAN_CARD_SENSORS = [
@@ -79,6 +79,7 @@ export function SortableKanbanCard({
         isDragSource && 'opacity-0',
       )}
       data-kanban-card-container=""
+      data-kanban-card-drag-id={id}
       data-kanban-card-draggable=""
       ref={setWrapperRef}
     >

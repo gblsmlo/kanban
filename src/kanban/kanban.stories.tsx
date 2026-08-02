@@ -6,6 +6,7 @@ import {
   CircleDotIcon,
   FilterIcon,
   Rows3Icon,
+  Rows4Icon,
   RotateCcwIcon,
   SettingsIcon,
   SlidersHorizontalIcon,
@@ -37,8 +38,10 @@ import { Toolbar as CossToolbar, ToolbarButton, ToolbarGroup } from '@/component
 import {
   KanbanBadge,
   KanbanCard,
+  KanbanCardCompactMetadata,
   KanbanCardContent,
   KanbanCardDescription,
+  type KanbanCardDisplay,
   KanbanCardFooter,
   KanbanCardHeader,
   KanbanCardTitle,
@@ -271,12 +274,19 @@ function cloneColumns(columns: KanbanColumnData<ExampleCard>[]): KanbanColumnDat
   return columns.map((column) => ({ ...column, cards: [...column.cards] }))
 }
 
-function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
+function ExampleCardView({
+  card,
+  display = 'full',
+}: Readonly<{
+  card: ExampleCard
+  display?: KanbanCardDisplay
+}>) {
   return (
-    <KanbanCard>
+    <KanbanCard display={display}>
       <KanbanCardHeader>
         <KanbanCardTitle className="text-sm leading-normal">{card.label}</KanbanCardTitle>
         <KanbanCardDescription className="text-xs leading-5">{card.summary}</KanbanCardDescription>
+        <KanbanCardCompactMetadata date={card.date} tags={card.tags} />
       </KanbanCardHeader>
       <KanbanCardContent>
         <ul
@@ -327,9 +337,9 @@ function InteractiveBoard() {
         getColumnActions={(column) =>
           column.id === 'backlog'
             ? {
-              onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
-              onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
-            }
+                onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
+                onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
+              }
             : undefined
         }
         getKey={(card) => card.id}
@@ -363,9 +373,9 @@ function OrderingAcceptanceBoard({
           getColumnActions={(column) =>
             column.id === 'backlog'
               ? {
-                onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
-                onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
-              }
+                  onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
+                  onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
+                }
               : undefined
           }
           getKey={(card) => card.id}
@@ -516,7 +526,15 @@ function FilterMenu({
   )
 }
 
-function SettingsMenu({ onReset }: Readonly<{ onReset: () => void }>) {
+function SettingsMenu({
+  display,
+  onDisplayChange,
+  onReset,
+}: Readonly<{
+  display: KanbanCardDisplay
+  onDisplayChange: (display: KanbanCardDisplay) => void
+  onReset: () => void
+}>) {
   return (
     <Menu>
       <MenuTrigger render={<ToolbarButton render={<Button variant="secondary" />} />}>
@@ -537,13 +555,23 @@ function SettingsMenu({ onReset }: Readonly<{ onReset: () => void }>) {
           <MenuSub>
             <MenuSubTrigger>
               <Rows3Icon aria-hidden="true" />
-              Card density
+              Card display
             </MenuSubTrigger>
             <MenuSubPopup>
-              <MenuRadioGroup defaultValue="comfortable">
-                <MenuRadioItem value="compact">Compact</MenuRadioItem>
-                <MenuRadioItem value="comfortable">Comfortable</MenuRadioItem>
-                <MenuRadioItem value="spacious">Spacious</MenuRadioItem>
+              <MenuRadioGroup
+                onValueChange={(value) => {
+                  if (value === 'full' || value === 'compact') onDisplayChange(value)
+                }}
+                value={display}
+              >
+                <MenuRadioItem closeOnClick value="full">
+                  <Rows4Icon aria-hidden="true" />
+                  Full
+                </MenuRadioItem>
+                <MenuRadioItem closeOnClick value="compact">
+                  <Rows3Icon aria-hidden="true" />
+                  Compact
+                </MenuRadioItem>
               </MenuRadioGroup>
             </MenuSubPopup>
           </MenuSub>
@@ -560,6 +588,7 @@ function SettingsMenu({ onReset }: Readonly<{ onReset: () => void }>) {
 
 function ToolbarBoard() {
   const [columns, setColumns] = useState(toolbarColumns)
+  const [display, setDisplay] = useState<KanbanCardDisplay>('full')
   const [filters, setFilters] = useState(emptyBoardFilters)
   const filteredColumns = useMemo(() => filterBoardColumns(columns, filters), [columns, filters])
   const resetFilters = () => setFilters(emptyBoardFilters)
@@ -584,7 +613,7 @@ function ToolbarBoard() {
               setFilters((currentFilters) => toggleBoardFilter(currentFilters, key, value))
             }
           />
-          <SettingsMenu onReset={resetFilters} />
+          <SettingsMenu display={display} onDisplayChange={setDisplay} onReset={resetFilters} />
         </ToolbarGroup>
       </CossToolbar>
 
@@ -598,7 +627,7 @@ function ToolbarBoard() {
             setColumns((current) => moveCard(current, move))
             return true
           }}
-          renderCard={(card) => <ExampleCardView card={card} />}
+          renderCard={(card) => <ExampleCardView card={card} display={display} />}
         />
       </div>
     </div>
@@ -676,6 +705,7 @@ export const BoardPresentationAcceptance: Story = {
       },
     ])
     await expect(canvas.queryByRole('button', { name: 'Restore order' })).toBeNull()
+    await expect(canvas.queryByRole('button', { name: 'Change card display' })).toBeNull()
     await expect(canvas.getByRole('button', { name: 'Configurar seção Backlog' })).toBeVisible()
     await expect(
       canvas.getByRole('button', { name: 'Adicionar item à seção Backlog' }),
@@ -691,6 +721,70 @@ export const BoardPresentationAcceptance: Story = {
         Array.from(card.children).map((section) => section.getAttribute('data-slot')),
       ).toEqual(['card-header', 'card-panel', 'card-footer'])
     }
+  },
+  render: () => <InteractiveBoard />,
+}
+
+export const CrossColumnMoveAcceptance: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const source = draggableCard(canvasElement, 'Mover card Define the public contract')
+    const target = draggableCard(canvasElement, 'Mover card Validate keyboard drag')
+    const sourceRect = source.getBoundingClientRect()
+    const targetRect = target.getBoundingClientRect()
+    const sourcePoint = {
+      clientX: sourceRect.left + sourceRect.width / 2,
+      clientY: sourceRect.top + sourceRect.height / 2,
+    }
+    const targetPoint = {
+      clientX: targetRect.left + targetRect.width / 2,
+      clientY: targetRect.top + targetRect.height / 2,
+    }
+
+    fireEvent.pointerDown(source, {
+      ...sourcePoint,
+      button: 0,
+      buttons: 1,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+    await nextAnimationFrame()
+    fireEvent.pointerMove(source, {
+      ...sourcePoint,
+      buttons: 1,
+      clientY: sourcePoint.clientY + 12,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+    await waitFor(() => expect(source).toHaveAttribute('aria-grabbed', 'true'))
+    fireEvent.pointerMove(target, {
+      ...targetPoint,
+      buttons: 1,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+    await nextAnimationFrame()
+    fireEvent.pointerUp(target, {
+      ...targetPoint,
+      button: 0,
+      buttons: 0,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+
+    await waitFor(() =>
+      expect(visibleBoardColumns(canvasElement).slice(0, 2)).toEqual([
+        { cards: [], title: 'Backlog' },
+        {
+          cards: ['Mover card Define the public contract', 'Mover card Validate keyboard drag'],
+          title: 'Todo',
+        },
+      ]),
+    )
   },
   render: () => <InteractiveBoard />,
 }
@@ -939,14 +1033,36 @@ export const Toolbar: Story = {
     await userEvent.click(settingsButton)
 
     await expect(await documentBody.findByText('Board settings')).toBeVisible()
-    for (const setting of ['Board preferences', 'Notifications', 'Card density']) {
+    for (const setting of ['Board preferences', 'Notifications', 'Card display']) {
       const menuItem = documentBody.getByRole('menuitem', { name: setting })
 
       await expect(menuItem).toBeVisible()
       await expect(menuItem.querySelector('svg')).not.toBeNull()
     }
 
-    await userEvent.click(documentBody.getByRole('menuitem', { name: 'Reset filters' }))
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Card display' }))
+    await userEvent.click(await documentBody.findByRole('menuitemradio', { name: 'Compact' }))
+
+    for (const card of canvas.getAllByRole('article')) {
+      await expect(card).toHaveAttribute('data-display', 'compact')
+    }
+    await expect(canvas.queryByRole('button', { name: 'Change card display' })).toBeNull()
+    await expect(canvas.queryByText(cards[1]!.summary)).not.toBeVisible()
+
+    await waitFor(() => expect(settingsButton).not.toHaveAttribute('data-popup-open'))
+    await nextAnimationFrame()
+    await userEvent.click(settingsButton)
+    await userEvent.hover(await documentBody.findByRole('menuitem', { name: 'Card display' }))
+    await userEvent.click(await documentBody.findByRole('menuitemradio', { name: 'Full' }))
+
+    for (const card of canvas.getAllByRole('article')) {
+      await expect(card).toHaveAttribute('data-display', 'full')
+    }
+
+    await waitFor(() => expect(settingsButton).not.toHaveAttribute('data-popup-open'))
+    await nextAnimationFrame()
+    await userEvent.click(settingsButton)
+    await userEvent.click(await documentBody.findByRole('menuitem', { name: 'Reset filters' }))
 
     await expect(filterButton).toHaveTextContent('Filter')
     await expect(visibleCardLabels(canvasElement)).toHaveLength(5)

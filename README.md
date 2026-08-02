@@ -11,6 +11,7 @@ remote state, mutations, navigation, and persistence.
 
 - generic typed columns and consumer-rendered cards
 - accessible card skeleton for consumer loading states
+- consumer-controlled full and compact card presentations
 - accessible pointer and keyboard drag-and-drop with the current DnD Kit React API
 - native optimistic sorting within and between populated columns
 - consumer-controlled move acceptance and rollback
@@ -35,10 +36,11 @@ into the pattern. It declares the official COSS registry dependencies so the
 consumer receives them through its configured `ui` alias.
 
 The view composes the canonical COSS `Badge`, `Button`, `Card`, `ScrollArea`,
-and `Skeleton` primitives. The npm build bundles their copy-owned source. The
-source registry instead declares `@coss/badge`, `@coss/button`, `@coss/card`,
-`@coss/scroll-area`, and `@coss/skeleton`, installing them at
-`@/components/ui/*` through the consumer's `ui` alias.
+`Skeleton`, and `Tooltip` primitives. The npm build bundles their
+copy-owned source. The source registry instead declares `@coss/badge`,
+`@coss/button`, `@coss/card`, `@coss/scroll-area`, `@coss/skeleton`, and
+`@coss/tooltip`, installing them at `@/components/ui/*` through the consumer's
+`ui` alias.
 
 ## Installation
 
@@ -159,6 +161,52 @@ to the underlying UI package. Render `KanbanCardHeader`, `KanbanCardContent`, an
 other task data; reserve the footer for metadata such as assignee or date.
 Consumers may adjust typography on `KanbanCardTitle` or
 `KanbanCardDescription`, while the sections retain their spacing and structure.
+
+### Card display modes
+
+`KanbanCard` defaults to the existing `full` presentation. Set its controlled
+`display` prop to `compact` to retain only the title, compact metadata, and
+date. The consumer owns the control and persistence of this preference; keep
+the control outside draggable cards, such as in the board toolbar settings:
+
+```tsx
+import {
+  KanbanCard,
+  KanbanCardCompactMetadata,
+  KanbanCardContent,
+  KanbanCardDescription,
+  KanbanCardFooter,
+  KanbanCardHeader,
+  KanbanCardTitle,
+  type KanbanCardDisplay,
+} from "@tc96/kanban";
+
+export function TaskCard({
+  display,
+  task,
+}: {
+  display: KanbanCardDisplay;
+  task: Task;
+}) {
+  return (
+    <KanbanCard display={display}>
+      <KanbanCardHeader>
+        <KanbanCardTitle>{task.title}</KanbanCardTitle>
+        <KanbanCardDescription>{task.description}</KanbanCardDescription>
+        <KanbanCardCompactMetadata date={task.date} tags={task.tags} />
+      </KanbanCardHeader>
+      <KanbanCardContent>{/* Full tags */}</KanbanCardContent>
+      <KanbanCardFooter>{/* Assignee and date */}</KanbanCardFooter>
+    </KanbanCard>
+  );
+}
+```
+
+The toolbar in Storybook demonstrates a board-wide `Full` or `Compact` setting.
+Compact metadata keeps the order title, tags, and date without adding a card
+action. The date stays visible beside the tag count; hovering or focusing the
+tag count opens the COSS tooltip with every tag. Supply `label`, `tagsLabel`, and
+`dateLabel` when the defaults do not match the product locale.
 
 `getColumnActions` enables the settings and add controls independently for each
 column. The package renders accessible icon buttons and reports the logical

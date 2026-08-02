@@ -16,6 +16,7 @@ export interface KanbanCardSkeletonProps
 
 export function KanbanCardSkeleton({
   className,
+  display = 'full',
   label = 'Carregando card',
   ...props
 }: KanbanCardSkeletonProps): ReactElement {
@@ -25,14 +26,19 @@ export function KanbanCardSkeleton({
       aria-busy="true"
       aria-label={label}
       className={cn('pointer-events-none select-none', className)}
+      display={display}
       role="status"
     >
       <KanbanCardHeader aria-hidden="true">
         <Skeleton className="h-4 w-2/3" />
-        <div className="grid gap-2">
-          <Skeleton className="h-3 w-full" />
-          <Skeleton className="h-3 w-4/5" />
-        </div>
+        {display === 'compact' ? (
+          <Skeleton className="h-3 w-8 shrink-0" />
+        ) : (
+          <div className="grid gap-2">
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-4/5" />
+          </div>
+        )}
       </KanbanCardHeader>
       <KanbanCardContent aria-hidden="true">
         <Skeleton className="h-6 w-12 rounded-full" />

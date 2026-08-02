@@ -40,6 +40,7 @@ describe('Kanban registry', () => {
       '@coss/card',
       '@coss/scroll-area',
       '@coss/skeleton',
+      '@coss/tooltip',
     ]
 
     expect(manifestItem?.registryDependencies?.toSorted()).toEqual(expectedDependencies)
@@ -85,6 +86,8 @@ describe('Kanban registry', () => {
 
     expect(badge?.content).toContain("from '@/components/ui/badge'")
     expect(card?.content).toContain("from '@/components/ui/card'")
+    expect(card?.content).toContain("from '@/components/ui/tooltip'")
+    expect(card?.content).not.toContain("from '@/components/ui/menu'")
     expect(cardSkeleton?.content).toContain("from '@/components/ui/skeleton'")
     expect(column?.content).toContain("from '@/components/ui/scroll-area'")
     expect(stageSelector?.content).toContain("from '@/components/ui/button'")
@@ -103,6 +106,7 @@ describe('Kanban registry', () => {
     )
     const componentNames = [
       'KanbanCardAction',
+      'KanbanCardCompactMetadata',
       'KanbanCardContent',
       'KanbanCardDescription',
       'KanbanCardFooter',

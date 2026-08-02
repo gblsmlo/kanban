@@ -102,7 +102,8 @@
         "@coss/button",
         "@coss/card",
         "@coss/scroll-area",
-        "@coss/skeleton"
+        "@coss/skeleton",
+        "@coss/tooltip"
       ],
       "meta": {
         "package": "@tc96/kanban",
