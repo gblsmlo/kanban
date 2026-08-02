@@ -4,11 +4,15 @@ import {
   BellIcon,
   CalendarIcon,
   CircleDotIcon,
+  Columns3Icon,
+  ExpandIcon,
+  EyeIcon,
   FilterIcon,
+  Rows2Icon,
   Rows3Icon,
-  Rows4Icon,
   RotateCcwIcon,
   SettingsIcon,
+  ShrinkIcon,
   SlidersHorizontalIcon,
   TagIcon,
   UserIcon,
@@ -529,12 +533,24 @@ function FilterMenu({
 function SettingsMenu({
   display,
   onDisplayChange,
-  onReset,
 }: Readonly<{
   display: KanbanCardDisplay
   onDisplayChange: (display: KanbanCardDisplay) => void
-  onReset: () => void
 }>) {
+  const [columnWidth, setColumnWidth] = useState('standard')
+  const [swimlane, setSwimlane] = useState('none')
+  const [expandedColumnIds, setExpandedColumnIds] = useState(() =>
+    toolbarColumns.map((column) => column.id),
+  )
+
+  const toggleColumn = (columnId: string) => {
+    setExpandedColumnIds((current) =>
+      current.includes(columnId)
+        ? current.filter((currentColumnId) => currentColumnId !== columnId)
+        : [...current, columnId],
+    )
+  }
+
   return (
     <Menu>
       <MenuTrigger render={<ToolbarButton render={<Button variant="secondary" />} />}>
@@ -543,44 +559,112 @@ function SettingsMenu({
       </MenuTrigger>
       <MenuPopup align="end">
         <MenuGroup>
-          <MenuGroupLabel>Board settings</MenuGroupLabel>
+          <MenuGroupLabel>Board</MenuGroupLabel>
           <MenuItem>
             <SlidersHorizontalIcon aria-hidden="true" />
-            Board preferences
+            Details
           </MenuItem>
           <MenuItem>
             <BellIcon aria-hidden="true" />
             Notifications
           </MenuItem>
+        </MenuGroup>
+        <MenuSeparator />
+        <MenuGroup>
+          <MenuGroupLabel>Layout</MenuGroupLabel>
           <MenuSub>
             <MenuSubTrigger>
               <Rows3Icon aria-hidden="true" />
-              Card display
+              Cards
             </MenuSubTrigger>
             <MenuSubPopup>
-              <MenuRadioGroup
-                onValueChange={(value) => {
-                  if (value === 'full' || value === 'compact') onDisplayChange(value)
-                }}
-                value={display}
-              >
-                <MenuRadioItem closeOnClick value="full">
-                  <Rows4Icon aria-hidden="true" />
-                  Full
-                </MenuRadioItem>
-                <MenuRadioItem closeOnClick value="compact">
-                  <Rows3Icon aria-hidden="true" />
-                  Compact
-                </MenuRadioItem>
-              </MenuRadioGroup>
+              <MenuGroup>
+                <MenuGroupLabel>Card detail</MenuGroupLabel>
+                <MenuRadioGroup
+                  onValueChange={(value) => {
+                    if (value === 'full' || value === 'compact') onDisplayChange(value)
+                  }}
+                  value={display}
+                >
+                  <MenuRadioItem closeOnClick value="full">
+                    Detailed
+                  </MenuRadioItem>
+                  <MenuRadioItem closeOnClick value="compact">
+                    Compact
+                  </MenuRadioItem>
+                </MenuRadioGroup>
+              </MenuGroup>
+            </MenuSubPopup>
+          </MenuSub>
+          <MenuSub>
+            <MenuSubTrigger>
+              <Columns3Icon aria-hidden="true" />
+              Columns
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              <MenuGroup>
+                <MenuGroupLabel>Column width</MenuGroupLabel>
+                <MenuRadioGroup onValueChange={setColumnWidth} value={columnWidth}>
+                  <MenuRadioItem value="narrow">Narrow</MenuRadioItem>
+                  <MenuRadioItem value="standard">Standard</MenuRadioItem>
+                  <MenuRadioItem value="wide">Wide</MenuRadioItem>
+                </MenuRadioGroup>
+              </MenuGroup>
+            </MenuSubPopup>
+          </MenuSub>
+          <MenuSub>
+            <MenuSubTrigger>
+              <Rows2Icon aria-hidden="true" />
+              Swimlanes
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              <MenuGroup>
+                <MenuGroupLabel>Group cards by</MenuGroupLabel>
+                <MenuRadioGroup onValueChange={setSwimlane} value={swimlane}>
+                  <MenuRadioItem value="none">None</MenuRadioItem>
+                  <MenuRadioItem value="assignee">Assignee</MenuRadioItem>
+                  <MenuRadioItem value="priority">Priority</MenuRadioItem>
+                </MenuRadioGroup>
+              </MenuGroup>
+            </MenuSubPopup>
+          </MenuSub>
+          <MenuSub>
+            <MenuSubTrigger>
+              <EyeIcon aria-hidden="true" />
+              Visibility
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              <MenuGroup>
+                <MenuGroupLabel>Column visibility</MenuGroupLabel>
+                <MenuItem
+                  closeOnClick={false}
+                  onClick={() => setExpandedColumnIds(toolbarColumns.map((column) => column.id))}
+                >
+                  <ExpandIcon aria-hidden="true" />
+                  Expand all
+                </MenuItem>
+                <MenuItem closeOnClick={false} onClick={() => setExpandedColumnIds([])}>
+                  <ShrinkIcon aria-hidden="true" />
+                  Collapse all
+                </MenuItem>
+              </MenuGroup>
+              <MenuSeparator />
+              <MenuGroup>
+                <MenuGroupLabel>Expanded columns</MenuGroupLabel>
+                {toolbarColumns.map((column) => (
+                  <MenuCheckboxItem
+                    checked={expandedColumnIds.includes(column.id)}
+                    closeOnClick={false}
+                    key={column.id}
+                    onCheckedChange={() => toggleColumn(column.id)}
+                  >
+                    {column.title}
+                  </MenuCheckboxItem>
+                ))}
+              </MenuGroup>
             </MenuSubPopup>
           </MenuSub>
         </MenuGroup>
-        <MenuSeparator />
-        <MenuItem onClick={onReset}>
-          <RotateCcwIcon aria-hidden="true" />
-          Reset filters
-        </MenuItem>
       </MenuPopup>
     </Menu>
   )
@@ -613,7 +697,7 @@ function ToolbarBoard() {
               setFilters((currentFilters) => toggleBoardFilter(currentFilters, key, value))
             }
           />
-          <SettingsMenu display={display} onDisplayChange={setDisplay} onReset={resetFilters} />
+          <SettingsMenu display={display} onDisplayChange={setDisplay} />
         </ToolbarGroup>
       </CossToolbar>
 
@@ -1032,15 +1116,62 @@ export const Toolbar: Story = {
     await userEvent.keyboard('{Escape}{Escape}')
     await userEvent.click(settingsButton)
 
-    await expect(await documentBody.findByText('Board settings')).toBeVisible()
-    for (const setting of ['Board preferences', 'Notifications', 'Card display']) {
+    await expect(await documentBody.findByText('Board')).toBeVisible()
+    await expect(await documentBody.findByText('Layout')).toBeVisible()
+    for (const setting of [
+      'Details',
+      'Notifications',
+      'Cards',
+      'Columns',
+      'Swimlanes',
+      'Visibility',
+    ]) {
       const menuItem = documentBody.getByRole('menuitem', { name: setting })
 
       await expect(menuItem).toBeVisible()
       await expect(menuItem.querySelector('svg')).not.toBeNull()
     }
 
-    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Card display' }))
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Columns' }))
+    await expect(await documentBody.findByText('Column width')).toBeVisible()
+    for (const width of ['Narrow', 'Standard', 'Wide']) {
+      await expect(documentBody.getByRole('menuitemradio', { name: width })).toBeVisible()
+    }
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(documentBody.queryByText('Column width')).toBeNull())
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Swimlanes' }))
+    await expect(await documentBody.findByText('Group cards by')).toBeVisible()
+    for (const grouping of ['None', 'Assignee', 'Priority']) {
+      await expect(documentBody.getByRole('menuitemradio', { name: grouping })).toBeVisible()
+    }
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(documentBody.queryByText('Group cards by')).toBeNull())
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Visibility' }))
+    await expect(await documentBody.findByText('Column visibility')).toBeVisible()
+    await expect(documentBody.getByRole('menuitem', { name: 'Expand all' })).toBeVisible()
+    await expect(documentBody.getByRole('menuitem', { name: 'Collapse all' })).toBeVisible()
+
+    await userEvent.click(documentBody.getByRole('menuitem', { name: 'Collapse all' }))
+    for (const column of ['Backlog', 'Todo', 'In Progress', 'In Review', 'Done']) {
+      await expect(documentBody.getByRole('menuitemcheckbox', { name: column })).toHaveAttribute(
+        'aria-checked',
+        'false',
+      )
+    }
+
+    await userEvent.click(documentBody.getByRole('menuitemcheckbox', { name: 'Backlog' }))
+    await expect(documentBody.getByRole('menuitemcheckbox', { name: 'Backlog' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+    await userEvent.click(documentBody.getByRole('menuitem', { name: 'Expand all' }))
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(documentBody.queryByText('Column visibility')).toBeNull())
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Cards' }))
+    await expect(await documentBody.findByText('Card detail')).toBeVisible()
     await userEvent.click(await documentBody.findByRole('menuitemradio', { name: 'Compact' }))
 
     for (const card of canvas.getAllByRole('article')) {
@@ -1052,8 +1183,10 @@ export const Toolbar: Story = {
     await waitFor(() => expect(settingsButton).not.toHaveAttribute('data-popup-open'))
     await nextAnimationFrame()
     await userEvent.click(settingsButton)
-    await userEvent.hover(await documentBody.findByRole('menuitem', { name: 'Card display' }))
-    await userEvent.click(await documentBody.findByRole('menuitemradio', { name: 'Full' }))
+    await userEvent.hover(await documentBody.findByRole('menuitem', { name: 'Cards' }))
+    const detailedItem = await documentBody.findByRole('menuitemradio', { name: 'Detailed' })
+    await expect(detailedItem.getBoundingClientRect().height).toBeLessThanOrEqual(32)
+    await userEvent.click(detailedItem)
 
     for (const card of canvas.getAllByRole('article')) {
       await expect(card).toHaveAttribute('data-display', 'full')
@@ -1061,8 +1194,8 @@ export const Toolbar: Story = {
 
     await waitFor(() => expect(settingsButton).not.toHaveAttribute('data-popup-open'))
     await nextAnimationFrame()
-    await userEvent.click(settingsButton)
-    await userEvent.click(await documentBody.findByRole('menuitem', { name: 'Reset filters' }))
+    await userEvent.click(filterButton)
+    await userEvent.click(await documentBody.findByRole('menuitem', { name: 'Clear filters' }))
 
     await expect(filterButton).toHaveTextContent('Filter')
     await expect(visibleCardLabels(canvasElement)).toHaveLength(5)

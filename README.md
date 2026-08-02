@@ -202,7 +202,10 @@ export function TaskCard({
 }
 ```
 
-The toolbar in Storybook demonstrates a board-wide `Full` or `Compact` setting.
+The toolbar in Storybook demonstrates a board-wide `Detailed` or `Compact`
+setting under `Settings → Layout → Cards`. The same Layout group includes
+consumer-owned mocks for column width, swimlane grouping, and expanded-column
+visibility.
 Compact metadata keeps the order title, tags, and date without adding a card
 action. The date stays visible beside the tag count; hovering or focusing the
 tag count opens the COSS tooltip with every tag. Supply `label`, `tagsLabel`, and

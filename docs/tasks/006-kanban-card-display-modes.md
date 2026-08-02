@@ -25,8 +25,11 @@ decidir como será persistida.
   `full` como valor padrão e retrocompatível.
 - Preservar a composição pública `KanbanCard*`; o consumer não acessa as
   primitivas internas de Card.
-- Demonstrar a ação de exibição em `Toolbar → Settings → Card display`, fora dos
+- Demonstrar a ação de exibição em `Toolbar → Settings → Layout → Cards`, fora dos
   elementos arrastáveis, usando `ui/menu` apenas no consumer da story.
+- Reservar no mock de `Layout` submenus claros para largura de `Columns`,
+  agrupamento por `Swimlanes` e expansão ou recolhimento em `Visibility`, sem
+  adicionar esses contratos à API pública do Kanban.
 - Compor o resumo compacto na ordem título, tags e data; a data permanece
   visível e `ui/tooltip` torna todas as tags disponíveis por hover e foco.
 - Não montar os controles e hooks do tooltip enquanto o card estiver em `full`;
@@ -44,8 +47,9 @@ decidir como será persistida.
 ## Critérios de aceite
 
 - O modo omitido renderiza exatamente a composição `full` existente.
-- O menu em `Toolbar → Settings` identifica a opção selecionada e alterna todos
-  os cards imediatamente entre `full` e `compact`.
+- O menu em `Toolbar → Settings → Layout → Cards` identifica as opções
+  `Detailed` e `Compact` e alterna todos os cards imediatamente entre `full` e
+  `compact`.
 - Os cards não exibem uma ação de reticências para controlar o display.
 - O modo compacto exibe título, ícone de tags, quantidade e data sem
   expandir a largura do card.
