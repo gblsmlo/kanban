@@ -18,7 +18,7 @@ Object.assign(window, { PointerEvent: TestPointerEvent })
 Object.assign(globalThis, { PointerEvent: TestPointerEvent })
 
 const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react')
-const { KanbanCard } = await import('./kanban-card')
+const { KanbanCard, KanbanCardContent } = await import('./kanban-card')
 const { KanbanColumn } = await import('./kanban-column')
 const { KanbanStageSelector } = await import('./kanban-stage-selector')
 const { KanbanView } = await import('./kanban-view')
@@ -96,7 +96,11 @@ describe('Kanban accessibility', () => {
     }
     const renderCard = () => (
       <KanbanCard>
-        <span className="whitespace-nowrap">tag-with-an-extremely-long-unbroken-value</span>
+        <KanbanCardContent>
+          <span className="min-w-0 max-w-full whitespace-nowrap">
+            tag-with-an-extremely-long-unbroken-value
+          </span>
+        </KanbanCardContent>
       </KanbanCard>
     )
 

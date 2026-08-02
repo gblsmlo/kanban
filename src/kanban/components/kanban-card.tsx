@@ -1,21 +1,32 @@
 import type { ComponentProps, ReactElement, ReactNode } from 'react'
-import { Card, CardPanel } from '@/components/ui/card'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { cn } from '../../lib/utils'
 
 export interface KanbanCardProps extends ComponentProps<typeof Card> {
   dimmed?: boolean
-  contentClassName?: string
-  renderContent?: boolean
   children: ReactNode
 }
+
+export type KanbanCardActionProps = ComponentProps<typeof CardAction>
+export type KanbanCardContentProps = ComponentProps<typeof CardContent>
+export type KanbanCardDescriptionProps = ComponentProps<typeof CardDescription>
+export type KanbanCardFooterProps = ComponentProps<typeof CardFooter>
+export type KanbanCardHeaderProps = ComponentProps<typeof CardHeader>
+export type KanbanCardTitleProps = ComponentProps<typeof CardTitle>
 
 export function KanbanCard({
   children,
   className,
-  contentClassName,
   dimmed = false,
   render = <article />,
-  renderContent = true,
   ...props
 }: KanbanCardProps): ReactElement {
   return (
@@ -24,11 +35,31 @@ export function KanbanCard({
       render={render}
       {...props}
     >
-      {renderContent ? (
-        <CardPanel className={cn('min-w-0 max-w-full p-4', contentClassName)}>{children}</CardPanel>
-      ) : (
-        children
-      )}
+      {children}
     </Card>
   )
+}
+
+export function KanbanCardHeader(props: KanbanCardHeaderProps): ReactElement {
+  return <CardHeader {...props} />
+}
+
+export function KanbanCardTitle(props: KanbanCardTitleProps): ReactElement {
+  return <CardTitle {...props} />
+}
+
+export function KanbanCardDescription(props: KanbanCardDescriptionProps): ReactElement {
+  return <CardDescription {...props} />
+}
+
+export function KanbanCardAction(props: KanbanCardActionProps): ReactElement {
+  return <CardAction {...props} />
+}
+
+export function KanbanCardContent(props: KanbanCardContentProps): ReactElement {
+  return <CardContent {...props} />
+}
+
+export function KanbanCardFooter(props: KanbanCardFooterProps): ReactElement {
+  return <CardFooter {...props} />
 }

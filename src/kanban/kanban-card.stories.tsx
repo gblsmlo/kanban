@@ -1,0 +1,182 @@
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { expect, waitFor, within } from 'storybook/test'
+
+import {
+  KanbanBadge,
+  KanbanCard,
+  KanbanCardContent,
+  KanbanCardDescription,
+  KanbanCardFooter,
+  KanbanCardHeader,
+  KanbanCardSkeleton,
+  KanbanCardTitle,
+} from './'
+
+interface ExampleCard {
+  assignee: string
+  creator: string
+  date: string
+  id: string
+  label: string
+  labels: string[]
+  priority: string
+  summary: string
+  tags: string[]
+}
+
+const cards: ExampleCard[] = [
+  {
+    assignee: 'Ana',
+    creator: 'Gabriel',
+    date: 'Today',
+    id: 'record-1',
+    label: 'Define the public contract',
+    labels: ['API'],
+    priority: 'High',
+    summary: 'Describe the data and callbacks owned by the consumer.',
+    tags: ['API'],
+  },
+  {
+    assignee: 'Bruno',
+    creator: 'Marina',
+    date: 'This week',
+    id: 'record-2',
+    label: 'Validate keyboard drag',
+    labels: ['A11y'],
+    priority: 'Urgent',
+    summary: 'Keep movement accessible without nesting interactive controls.',
+    tags: ['A11y', 'Keyboard'],
+  },
+  {
+    assignee: 'Casey',
+    creator: 'Gabriel',
+    date: 'Later',
+    id: 'record-3',
+    label: 'Document composition',
+    labels: ['Docs'],
+    priority: 'Medium',
+    summary: 'Show how products provide their own card content.',
+    tags: ['Docs', 'Composition', 'API'],
+  },
+  {
+    assignee: 'Ana',
+    creator: 'Priya',
+    date: 'This week',
+    id: 'record-4',
+    label: 'Persist card priority',
+    labels: ['State'],
+    priority: 'High',
+    summary: 'Apply the requested target index in the consumer data source.',
+    tags: ['State management', 'High priority', 'Optimistic interface', 'Cache synchronization'],
+  },
+]
+
+function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
+  return (
+    <KanbanCard>
+      <KanbanCardHeader>
+        <KanbanCardTitle className="text-sm leading-normal">{card.label}</KanbanCardTitle>
+        <KanbanCardDescription className="text-xs leading-5">{card.summary}</KanbanCardDescription>
+      </KanbanCardHeader>
+      <KanbanCardContent>
+        <ul
+          aria-label={`Tags de ${card.label}`}
+          className="flex min-w-0 max-w-full flex-wrap gap-1.5"
+        >
+          {card.tags.map((tag) => (
+            <li className="min-w-0 max-w-full" key={tag} title={tag}>
+              <KanbanBadge className="max-w-full overflow-hidden">
+                <span className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                  {tag}
+                </span>
+              </KanbanBadge>
+            </li>
+          ))}
+        </ul>
+      </KanbanCardContent>
+      <KanbanCardFooter className="justify-between gap-3 text-muted-foreground text-xs">
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <span className="truncate">{card.assignee}</span>
+        </span>
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <span className="truncate">{card.date}</span>
+        </span>
+      </KanbanCardFooter>
+    </KanbanCard>
+  )
+}
+
+function renderCard(card: ExampleCard) {
+  return <div className="w-full max-w-sm px-4 py-6">{ExampleCardView({ card })}</div>
+}
+
+const meta = {
+  component: KanbanCard,
+  title: 'Patterns/Card',
+} satisfies Meta
+
+export default meta
+type Story = StoryObj
+
+function expectTaglessLayout(canvasElement: HTMLElement, expectedTagCount: number) {
+  return async function () {
+    const card = within(canvasElement).getByRole('article')
+    const tags = within(card).getAllByRole('listitem')
+
+    await expect(tags).toHaveLength(expectedTagCount)
+    for (const tag of tags) {
+      const tagText = tag.querySelector<HTMLElement>('[data-slot="badge"] > span')
+
+      await expect(tagText).not.toBeNull()
+      await expect(window.getComputedStyle(tagText!).whiteSpace).toBe('nowrap')
+    }
+  }
+}
+
+export const OneTag: Story = {
+  play: async ({ canvasElement }) => {
+    await expectTaglessLayout(canvasElement, 1)()
+    await expect(within(canvasElement).getAllByRole('article')[0]).not.toBeNull()
+  },
+  render: () => renderCard(cards[0]!),
+}
+
+export const TwoTags: Story = {
+  play: async ({ canvasElement }) => {
+    await expectTaglessLayout(canvasElement, 2)()
+  },
+  render: () => renderCard(cards[1]!),
+}
+
+export const ThreeTags: Story = {
+  play: async ({ canvasElement }) => {
+    await expectTaglessLayout(canvasElement, 3)()
+  },
+  render: () => renderCard(cards[2]!),
+}
+
+export const FourTags: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const tags = canvas.getAllByRole('listitem')
+
+    await expectTaglessLayout(canvasElement, 4)()
+    await waitFor(() =>
+      expect(tags[3]!.getBoundingClientRect().top).toBeGreaterThan(
+        tags[0]!.getBoundingClientRect().top,
+      ),
+    )
+  },
+  render: () => renderCard(cards[3]!),
+}
+
+export const Loading: Story = {
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getAllByRole('status')).toHaveLength(1)
+  },
+  render: () => (
+    <div className="w-full max-w-sm px-4 py-6">
+      <KanbanCardSkeleton label="Carregando card de exemplo" />
+    </div>
+  ),
+}

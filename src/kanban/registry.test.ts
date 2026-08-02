@@ -96,6 +96,28 @@ describe('Kanban registry', () => {
     }
   })
 
+  test('ships the Kanban-owned card composition API', () => {
+    const publicApi = distributedItem.files.find((file) => file.path === 'src/kanban/index.ts')
+    const card = distributedItem.files.find(
+      (file) => file.path === 'src/kanban/components/kanban-card.tsx',
+    )
+    const componentNames = [
+      'KanbanCardAction',
+      'KanbanCardContent',
+      'KanbanCardDescription',
+      'KanbanCardFooter',
+      'KanbanCardHeader',
+      'KanbanCardTitle',
+    ]
+
+    for (const componentName of componentNames) {
+      expect(publicApi?.content).toContain(componentName)
+      expect(card?.content).toContain(`export function ${componentName}`)
+    }
+
+    expect(publicApi?.content).not.toContain("from '@/components/ui/card'")
+  })
+
   test('keeps direct Base UI imports inside the COSS ui source boundary', () => {
     const kanbanSources = findSourceFiles('src/kanban').filter(
       (path) => /\.[jt]sx?$/.test(path) && !path.includes('.test.'),
