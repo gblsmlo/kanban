@@ -266,7 +266,7 @@ function InteractiveBoard() {
   const [columns, setColumns] = useState(initialColumns)
 
   return (
-    <div className="h-[560px] min-h-0 p-4">
+    <div className="h-[560px] min-h-0 max-w-[720px] p-4">
       <KanbanView
         columns={columns}
         getCardLabel={(card) => card.label}
@@ -504,6 +504,19 @@ type CardStory = StoryObj<{ loading?: boolean }>
 
 export const Board: Story = {
   play: async ({ canvasElement }) => {
+    const scrollArea = canvasElement.querySelector<HTMLElement>('[data-kanban-board-scroll-area]')
+    const viewport = scrollArea?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]')
+    const horizontalScrollbar = scrollArea?.querySelector<HTMLElement>(
+      '[data-orientation="horizontal"][data-slot="scroll-area-scrollbar"]',
+    )
+
+    await expect(scrollArea?.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
+    await expect(viewport).not.toBeNull()
+    await expect(horizontalScrollbar).not.toBeNull()
+    await userEvent.hover(viewport!)
+    await expect(scrollArea?.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
+    await expect(window.getComputedStyle(horizontalScrollbar!).opacity).toBe('0')
+
     await expect(visibleCardLabels(canvasElement).slice(0, 3)).toEqual([
       'Mover card Define the public contract',
       'Mover card Validate keyboard drag',

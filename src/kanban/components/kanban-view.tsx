@@ -2,6 +2,7 @@ import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { cn } from '../../lib/utils'
 
 import { useActiveColumnId } from '../hooks/use-active-column-id'
 import { useHorizontalDragScroll } from '../hooks/use-horizontal-drag-scroll'
@@ -62,6 +63,7 @@ export function KanbanView<TCard>({
     renderCard,
     sortableCards: cardDragEnabled,
   }
+  const showHorizontalScrollbar = cardDragEnabled && isBoardDragging
 
   return (
     <div className="h-full min-h-0">
@@ -85,16 +87,18 @@ export function KanbanView<TCard>({
           </div>
 
           <ScrollArea
-            className={
+            className={cn(
+              'hidden min-h-0 flex-1 md:block',
+              showHorizontalScrollbar
+                ? '[&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!opacity-100'
+                : '[&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!pointer-events-none [&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!opacity-0',
               cardDragEnabled
-                ? `hidden min-h-0 flex-1 md:block [&_[data-slot=scroll-area-viewport]]:select-none ${
-                    isBoardDragging
-                      ? '[&_[data-slot=scroll-area-viewport]]:cursor-grabbing'
-                      : '[&_[data-slot=scroll-area-viewport]]:cursor-grab'
-                  }`
-                : 'hidden min-h-0 flex-1 md:block [&_[data-slot=scroll-area-viewport]]:cursor-default'
-            }
+                ? '[&_[data-slot=scroll-area-viewport]]:cursor-grab [&_[data-slot=scroll-area-viewport]]:select-none'
+                : '[&_[data-slot=scroll-area-viewport]]:cursor-default',
+              showHorizontalScrollbar && '[&_[data-slot=scroll-area-viewport]]:cursor-grabbing',
+            )}
             data-kanban-board-scroll-area=""
+            data-kanban-horizontal-scrollbar={showHorizontalScrollbar ? 'visible' : 'hidden'}
             fill
             ref={cardDragEnabled ? rootRef : undefined}
             scrollbarGutter
