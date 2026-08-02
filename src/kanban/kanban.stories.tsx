@@ -193,6 +193,152 @@ const toolbarColumns: KanbanColumnData<ExampleCard>[] = [
   },
 ]
 
+const toolbarFilterCards: ExampleCard[] = [
+  {
+    assignee: 'Ana',
+    creator: 'Marina',
+    date: 'Today',
+    id: 'record-6',
+    label: 'Map filter behavior',
+    labels: ['API', 'Docs'],
+    priority: 'Medium',
+    summary: 'Exercise multiple values in one filter and the AND rule between fields.',
+    tags: ['Filters', 'API'],
+  },
+  {
+    assignee: 'Bruno',
+    creator: 'Gabriel',
+    date: 'This week',
+    id: 'record-7',
+    label: 'Add keyboard shortcuts',
+    labels: ['A11y'],
+    priority: 'High',
+    summary: 'Keep menu actions discoverable for keyboard and assistive technology users.',
+    tags: ['A11y', 'Keyboard'],
+  },
+  {
+    assignee: 'Casey',
+    creator: 'Priya',
+    date: 'Later',
+    id: 'record-8',
+    label: 'Review empty states',
+    labels: ['QA'],
+    priority: 'Low',
+    summary: 'Make a zero-result filter understandable and recoverable.',
+    tags: ['QA', 'Empty state'],
+  },
+  {
+    assignee: 'Dana',
+    creator: 'Marina',
+    date: 'Today',
+    id: 'record-9',
+    label: 'Define layout defaults',
+    labels: ['State'],
+    priority: 'Urgent',
+    summary: 'Choose a predictable initial display for a new board.',
+    tags: ['Settings', 'Defaults'],
+  },
+  {
+    assignee: 'Ana',
+    creator: 'Gabriel',
+    date: 'This week',
+    id: 'record-10',
+    label: 'Audit column actions',
+    labels: ['Docs'],
+    priority: 'High',
+    summary: 'Document add, settings, and expansion actions for every column.',
+    tags: ['Columns', 'Actions'],
+  },
+  {
+    assignee: 'Bruno',
+    creator: 'Priya',
+    date: 'Later',
+    id: 'record-11',
+    label: 'Test compact density',
+    labels: ['API'],
+    priority: 'Medium',
+    summary: 'Compare compact and detailed cards without losing context.',
+    tags: ['Cards', 'Compact'],
+  },
+  {
+    assignee: 'Casey',
+    creator: 'Marina',
+    date: 'Today',
+    id: 'record-12',
+    label: 'Check persisted preferences',
+    labels: ['QA'],
+    priority: 'Low',
+    summary: 'Verify a consumer can restore settings after a reload.',
+    tags: ['Persistence', 'QA'],
+  },
+  {
+    assignee: 'Dana',
+    creator: 'Gabriel',
+    date: 'This week',
+    id: 'record-13',
+    label: 'Handle stale snapshots',
+    labels: ['A11y'],
+    priority: 'Urgent',
+    summary: 'Keep the optimistic order visible while a cache catches up.',
+    tags: ['Cache', 'Optimistic UI'],
+  },
+  {
+    assignee: 'Ana',
+    creator: 'Priya',
+    date: 'Later',
+    id: 'record-14',
+    label: 'Group cards by lane',
+    labels: ['State'],
+    priority: 'Medium',
+    summary: 'Prepare a reusable grouping model for future swimlane settings.',
+    tags: ['Swimlanes', 'Grouping'],
+  },
+  {
+    assignee: 'Bruno',
+    creator: 'Marina',
+    date: 'Today',
+    id: 'record-15',
+    label: 'Prepare release notes',
+    labels: ['API'],
+    priority: 'High',
+    summary: 'Describe the public surface for products integrating the provider.',
+    tags: ['Release', 'API'],
+  },
+]
+
+const toolbarFilterColumns: KanbanColumnData<ExampleCard>[] = [
+  {
+    cards: [cards[0]!, toolbarFilterCards[0]!, toolbarFilterCards[1]!],
+    count: 3,
+    id: 'backlog',
+    title: 'Backlog',
+  },
+  {
+    cards: [cards[1]!, toolbarFilterCards[2]!, toolbarFilterCards[3]!],
+    count: 3,
+    id: 'todo',
+    title: 'Todo',
+  },
+  {
+    cards: [cards[2]!, toolbarFilterCards[4]!, toolbarFilterCards[5]!],
+    count: 3,
+    id: 'in-progress',
+    title: 'In Progress',
+  },
+  {
+    cards: [cards[3]!, toolbarFilterCards[6]!, toolbarFilterCards[7]!],
+    count: 3,
+    id: 'in-review',
+    title: 'In Review',
+  },
+  {
+    cards: [cards[4]!, toolbarFilterCards[8]!, toolbarFilterCards[9]!],
+    count: 3,
+    id: 'done',
+    title: 'Done',
+  },
+]
+
 type BoardFilterKey = 'assignee' | 'creator' | 'date' | 'labels' | 'priority' | 'status'
 type BoardFilters = Record<BoardFilterKey, string[]>
 
@@ -338,14 +484,10 @@ function InteractiveBoard() {
       <KanbanView
         columns={columns}
         getCardLabel={(card) => card.label}
-        getColumnActions={(column) =>
-          column.id === 'backlog'
-            ? {
-                onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
-                onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
-              }
-            : undefined
-        }
+        getColumnActions={(_column) => ({
+          onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
+          onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
+        })}
         getKey={(card) => card.id}
         mobileStageHint="Select a column to inspect its cards on small screens."
         onMoveCard={(move) => {
@@ -540,8 +682,12 @@ function SettingsMenu({
   const [columnWidth, setColumnWidth] = useState('standard')
   const [swimlane, setSwimlane] = useState('none')
   const [expandedColumnIds, setExpandedColumnIds] = useState(() =>
-    toolbarColumns.map((column) => column.id),
+    toolbarFilterColumns.map((column) => column.id),
   )
+
+  const setAllColumnsExpanded = (expanded: boolean) => {
+    setExpandedColumnIds(expanded ? toolbarFilterColumns.map((column) => column.id) : [])
+  }
 
   const toggleColumn = (columnId: string) => {
     setExpandedColumnIds((current) =>
@@ -636,14 +782,11 @@ function SettingsMenu({
             <MenuSubPopup>
               <MenuGroup>
                 <MenuGroupLabel>Column visibility</MenuGroupLabel>
-                <MenuItem
-                  closeOnClick={false}
-                  onClick={() => setExpandedColumnIds(toolbarColumns.map((column) => column.id))}
-                >
+                <MenuItem closeOnClick={false} onClick={() => setAllColumnsExpanded(true)}>
                   <ExpandIcon aria-hidden="true" />
                   Expand all
                 </MenuItem>
-                <MenuItem closeOnClick={false} onClick={() => setExpandedColumnIds([])}>
+                <MenuItem closeOnClick={false} onClick={() => setAllColumnsExpanded(false)}>
                   <ShrinkIcon aria-hidden="true" />
                   Collapse all
                 </MenuItem>
@@ -651,7 +794,7 @@ function SettingsMenu({
               <MenuSeparator />
               <MenuGroup>
                 <MenuGroupLabel>Expanded columns</MenuGroupLabel>
-                {toolbarColumns.map((column) => (
+                {toolbarFilterColumns.map((column) => (
                   <MenuCheckboxItem
                     checked={expandedColumnIds.includes(column.id)}
                     closeOnClick={false}
@@ -671,7 +814,7 @@ function SettingsMenu({
 }
 
 function ToolbarBoard() {
-  const [columns, setColumns] = useState(toolbarColumns)
+  const [columns, setColumns] = useState(toolbarFilterColumns)
   const [display, setDisplay] = useState<KanbanCardDisplay>('full')
   const [filters, setFilters] = useState(emptyBoardFilters)
   const filteredColumns = useMemo(() => filterBoardColumns(columns, filters), [columns, filters])
@@ -705,6 +848,12 @@ function ToolbarBoard() {
         <KanbanView
           columns={filteredColumns}
           getCardLabel={(card) => card.label}
+          getColumnActions={(column) => ({
+            addLabel: `Adicionar item à seção ${column.title}`,
+            onAddCard: () => undefined,
+            onOpenSettings: () => undefined,
+            settingsLabel: `Configurar seção ${column.title}`,
+          })}
           getKey={(card) => card.id}
           mobileStageHint="Select a workflow stage."
           onMoveCard={(move) => {
@@ -794,7 +943,6 @@ export const BoardPresentationAcceptance: Story = {
     await expect(
       canvas.getByRole('button', { name: 'Adicionar item à seção Backlog' }),
     ).toBeVisible()
-
     const composedCards = Array.from(
       canvasElement.querySelectorAll<HTMLElement>('[data-slot="card"]'),
     ).filter((card) => card.getClientRects().length > 0)
@@ -1068,6 +1216,14 @@ export const ReadOnly: Story = {
 }
 
 export const Toolbar: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Teste manual: use Filter para combinar Status, Assignee, Creator, Priority, Labels e Date; selecione mais de uma opção no mesmo submenu para validar OR, combine submenus para validar AND e use Clear filters para restaurar os 15 cards. Em Settings, confira Detailed/Compact, Column width, Swimlanes e Visibility. A opção Expanded em Visibility é um mock visual do menu e não altera as colunas nesta story.',
+      },
+    },
+  },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const documentBody = within(canvasElement.ownerDocument.body)
@@ -1160,6 +1316,10 @@ export const Toolbar: Story = {
         'false',
       )
     }
+    await expect(
+      canvas.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent),
+    ).toEqual(columnTitles)
+    await expect(visibleCardLabels(canvasElement)).toEqual(['Mover card Validate keyboard drag'])
 
     await userEvent.click(documentBody.getByRole('menuitemcheckbox', { name: 'Backlog' }))
     await expect(documentBody.getByRole('menuitemcheckbox', { name: 'Backlog' })).toHaveAttribute(
@@ -1167,6 +1327,10 @@ export const Toolbar: Story = {
       'true',
     )
     await userEvent.click(documentBody.getByRole('menuitem', { name: 'Expand all' }))
+    await expect(
+      canvas.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent),
+    ).toEqual(columnTitles)
+    await expect(visibleCardLabels(canvasElement)).toEqual(['Mover card Validate keyboard drag'])
     await userEvent.keyboard('{Escape}')
     await waitFor(() => expect(documentBody.queryByText('Column visibility')).toBeNull())
 
@@ -1198,7 +1362,36 @@ export const Toolbar: Story = {
     await userEvent.click(await documentBody.findByRole('menuitem', { name: 'Clear filters' }))
 
     await expect(filterButton).toHaveTextContent('Filter')
-    await expect(visibleCardLabels(canvasElement)).toHaveLength(5)
+    await expect(visibleCardLabels(canvasElement)).toHaveLength(15)
+  },
+  render: () => <ToolbarBoard />,
+}
+
+export const FilterCombinationAcceptance: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const documentBody = within(canvasElement.ownerDocument.body)
+    const filterButton = canvas.getByRole('button', { name: 'Filter' })
+
+    await userEvent.click(filterButton)
+    await userEvent.hover(await documentBody.findByRole('menuitem', { name: 'Status' }))
+    await userEvent.click(await documentBody.findByRole('menuitemcheckbox', { name: 'Backlog' }))
+    await userEvent.click(await documentBody.findByRole('menuitemcheckbox', { name: 'Todo' }))
+
+    await expect(filterButton).toHaveTextContent('Filter (2)')
+    await expect(visibleCardLabels(canvasElement)).toHaveLength(6)
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Assignee' }))
+    await userEvent.click(await documentBody.findByRole('menuitemcheckbox', { name: 'Dana' }))
+    await expect(visibleCardLabels(canvasElement)).toEqual(['Mover card Define layout defaults'])
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Creator' }))
+    await userEvent.click(await documentBody.findByRole('menuitemcheckbox', { name: 'Gabriel' }))
+    await expect(visibleCardLabels(canvasElement)).toHaveLength(0)
+
+    await userEvent.click(documentBody.getByRole('menuitem', { name: 'Clear filters' }))
+    await expect(visibleCardLabels(canvasElement)).toHaveLength(15)
   },
   render: () => <ToolbarBoard />,
 }
