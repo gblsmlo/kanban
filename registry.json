@@ -45,6 +45,11 @@
           "target": "@components/patterns/kanban/kanban/components/kanban-card.tsx"
         },
         {
+          "path": "src/kanban/components/kanban-card-skeleton.tsx",
+          "type": "registry:ui",
+          "target": "@components/patterns/kanban/kanban/components/kanban-card-skeleton.tsx"
+        },
+        {
           "path": "src/kanban/components/kanban-column.tsx",
           "type": "registry:ui",
           "target": "@components/patterns/kanban/kanban/components/kanban-column.tsx"
@@ -99,7 +104,8 @@
           "type": "registry:lib",
           "target": "@components/patterns/kanban/lib/utils.ts"
         }
-      ]
+      ],
+      "registryDependencies": ["@coss/skeleton"]
     }
   ]
 }

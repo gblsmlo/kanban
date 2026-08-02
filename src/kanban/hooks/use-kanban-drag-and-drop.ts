@@ -1,26 +1,26 @@
-import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
-import { KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
   createCardDragId,
   findCardLocation,
-  moveCardToPreviewColumn,
-  resolveCardMove,
-  resolveTargetColumnId,
+  projectKanbanColumns,
+  resolveKanbanCardMove,
 } from '../lib/drag-and-drop'
 import type { KanbanCardMove, KanbanColumnData } from '../types'
 
 interface UseKanbanDragAndDropOptions<TCard> {
   columns: KanbanColumnData<TCard>[]
   getKey: (card: TCard) => string | number
-  onMoveCard?: (move: KanbanCardMove<TCard>) => boolean
+  onMoveCard?: (move: KanbanCardMove<TCard>) => boolean | Promise<boolean>
 }
 
 interface PendingCardMove {
+  accepted: boolean
   cardDragId: string
+  requestId: number
   targetColumnId: string
+  targetIndex?: number
 }
 
 export function useKanbanDragAndDrop<TCard>({
@@ -28,145 +28,171 @@ export function useKanbanDragAndDrop<TCard>({
   getKey,
   onMoveCard,
 }: UseKanbanDragAndDropOptions<TCard>) {
-  const [previewColumns, setPreviewColumns] = useState<KanbanColumnData<TCard>[] | null>(null)
-  const [activeCard, setActiveCard] = useState<TCard | null>(null)
-  const previewColumnsRef = useRef<KanbanColumnData<TCard>[] | null>(null)
-  const sourceColumnIdRef = useRef<string | null>(null)
+  const [optimisticColumns, setOptimisticColumns] = useState<KanbanColumnData<TCard>[] | null>(null)
+  const [reconciliationKey, setReconciliationKey] = useState(0)
+  const columnsRef = useRef(columns)
+  const optimisticColumnsRef = useRef<KanbanColumnData<TCard>[] | null>(null)
+  const dragSourceColumnsRef = useRef<KanbanColumnData<TCard>[] | null>(null)
+  const rollbackSourceColumnsRef = useRef<KanbanColumnData<TCard>[] | null>(null)
   const pendingCardMoveRef = useRef<PendingCardMove | null>(null)
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
+  const moveRequestIdRef = useRef(0)
+  columnsRef.current = columns
 
   const getCardDragId = useCallback((card: TCard) => createCardDragId(getKey(card)), [getKey])
-  const cardsByDragId = useMemo(
-    () =>
-      new Map(
-        columns.flatMap((column) =>
-          column.cards.map((card) => [String(getCardDragId(card)), card] as const),
-        ),
-      ),
-    [columns, getCardDragId],
-  )
-
-  const updatePreviewColumns = useCallback((nextColumns: KanbanColumnData<TCard>[] | null) => {
-    previewColumnsRef.current = nextColumns
-    setPreviewColumns(nextColumns)
+  const updateOptimisticColumns = useCallback((nextColumns: KanbanColumnData<TCard>[] | null) => {
+    if (optimisticColumnsRef.current === nextColumns) return
+    optimisticColumnsRef.current = nextColumns
+    setOptimisticColumns(nextColumns)
   }, [])
 
-  const resetDragState = useCallback(() => {
-    pendingCardMoveRef.current = null
-    sourceColumnIdRef.current = null
-    setActiveCard(null)
-    updatePreviewColumns(null)
-  }, [updatePreviewColumns])
-
   useEffect(() => {
-    const pendingCardMove = pendingCardMoveRef.current
-    if (!pendingCardMove) return
+    const rollbackSourceColumns = rollbackSourceColumnsRef.current
+    if (rollbackSourceColumns && columns !== rollbackSourceColumns) {
+      rollbackSourceColumnsRef.current = null
+      updateOptimisticColumns(null)
+      return
+    }
 
-    const cardLocation = findCardLocation(columns, pendingCardMove.cardDragId, getCardDragId)
-    if (cardLocation?.columnId !== pendingCardMove.targetColumnId) return
+    const pendingCardMove = pendingCardMoveRef.current
+    if (!pendingCardMove?.accepted) return
+    if (!isPendingCardMoveConfirmed(columns, pendingCardMove, getCardDragId)) return
 
     pendingCardMoveRef.current = null
-    updatePreviewColumns(null)
-  }, [columns, getCardDragId, updatePreviewColumns])
+    updateOptimisticColumns(null)
+  }, [columns, getCardDragId, updateOptimisticColumns])
 
-  const handleDragStart = useCallback(
-    (event: DragStartEvent) => {
-      const isCardDrag = event.active.data.current?.type === 'card'
-      pendingCardMoveRef.current = null
-      sourceColumnIdRef.current = isCardDrag
-        ? String(event.active.data.current?.columnId ?? '')
-        : null
-      updatePreviewColumns(isCardDrag ? columns : null)
-      setActiveCard(isCardDrag ? (cardsByDragId.get(String(event.active.id)) ?? null) : null)
-    },
-    [cardsByDragId, columns, updatePreviewColumns],
-  )
+  const handleDragStart = useCallback((_event: DragStartEvent) => {
+    dragSourceColumnsRef.current = optimisticColumnsRef.current ?? columnsRef.current
+  }, [])
 
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
-      const { active, over } = event
-      if (!over || active.data.current?.type !== 'card' || !onMoveCard) return
+      const { source, target } = event.operation
 
-      const targetColumnId = resolveTargetColumnId(over.id, over.data.current)
-      if (!targetColumnId) return
-      const activeRect = active.rect?.current.translated ?? null
-      const insertAfter =
-        over.data.current?.type === 'card' &&
-        activeRect !== null &&
-        activeRect.top + activeRect.height / 2 > over.rect.top + over.rect.height / 2
+      // OptimisticSortingPlugin owns sortable-to-sortable previews without a
+      // React render. dnd-kit documents plain droppable columns as the extra
+      // state-managed case needed to enter an empty list.
+      if (!onMoveCard || source?.data.type !== 'card' || target?.data.type !== 'column') {
+        return
+      }
 
-      updatePreviewColumns(
-        moveCardToPreviewColumn(
-          previewColumnsRef.current ?? columns,
-          String(active.id),
-          targetColumnId,
-          over.id,
-          getCardDragId,
-          insertAfter,
-        ),
-      )
+      const visibleColumns =
+        optimisticColumnsRef.current ?? dragSourceColumnsRef.current ?? columnsRef.current
+      const projectedColumns = projectKanbanColumns(visibleColumns, event, getCardDragId)
+
+      if (projectedColumns !== visibleColumns) updateOptimisticColumns(projectedColumns)
     },
-    [columns, getCardDragId, onMoveCard, updatePreviewColumns],
+    [getCardDragId, onMoveCard, updateOptimisticColumns],
   )
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      const { active, over } = event
-      if (!over) {
-        resetDragState()
+      const sourceColumns = dragSourceColumnsRef.current ?? columnsRef.current
+      dragSourceColumnsRef.current = null
+
+      if (event.canceled) {
+        if (!pendingCardMoveRef.current) updateOptimisticColumns(null)
         return
       }
 
-      const activeData = active.data.current
-      const overData = over.data.current
+      const visibleColumns = optimisticColumnsRef.current ?? sourceColumns
+      const projectedColumns = projectKanbanColumns(visibleColumns, event, getCardDragId)
+      const move = resolveKanbanCardMove(sourceColumns, projectedColumns, event, getCardDragId)
 
-      if (activeData?.type === 'card' && onMoveCard) {
-        const activeDragId = String(active.id)
-        const move = resolveCardMove({
-          activeDragId,
-          columns,
-          getCardDragId,
-          overData,
-          overId: over.id,
-          sourceColumnId: sourceColumnIdRef.current || String(activeData.columnId),
-          visibleColumns: previewColumnsRef.current ?? columns,
-        })
-
-        if (move) {
-          const moveAccepted = onMoveCard(move)
-
-          sourceColumnIdRef.current = null
-          setActiveCard(null)
-
-          if (!moveAccepted) {
-            updatePreviewColumns(null)
-          } else {
-            pendingCardMoveRef.current = {
-              cardDragId: activeDragId,
-              targetColumnId: move.targetColumnId,
-            }
-          }
-          return
-        }
+      if (!move || !onMoveCard) {
+        if (!pendingCardMoveRef.current) updateOptimisticColumns(null)
+        return
       }
 
-      resetDragState()
+      updateOptimisticColumns(projectedColumns)
+      rollbackSourceColumnsRef.current = null
+      const requestId = moveRequestIdRef.current + 1
+      moveRequestIdRef.current = requestId
+      pendingCardMoveRef.current = {
+        accepted: false,
+        cardDragId: String(event.operation.source?.id),
+        requestId,
+        targetColumnId: move.targetColumnId,
+        targetIndex: move.targetIndex,
+      }
+      const suspension = event.suspend()
+
+      const settleCardMove = (accepted: boolean, settleSuspension: boolean) => {
+        const pendingCardMove = pendingCardMoveRef.current
+        if (!pendingCardMove || pendingCardMove.requestId !== requestId) return
+
+        if (!accepted) {
+          pendingCardMoveRef.current = null
+          if (settleSuspension) suspension.abort()
+          rollbackSourceColumnsRef.current = sourceColumns
+          updateOptimisticColumns(cloneColumnOrder(sourceColumns))
+          // The optimistic plugin mutates DOM outside React and the suspended
+          // abort resets in a later microtask. Remount now and once after that
+          // reset so React's original order becomes authoritative again.
+          setReconciliationKey((current) => current + 1)
+          requestAnimationFrame(() => setReconciliationKey((current) => current + 1))
+          return
+        }
+
+        pendingCardMove.accepted = true
+        if (settleSuspension) suspension.resume()
+        if (!isPendingCardMoveConfirmed(columnsRef.current, pendingCardMove, getCardDragId)) return
+
+        pendingCardMoveRef.current = null
+        updateOptimisticColumns(null)
+      }
+
+      try {
+        const moveAccepted = onMoveCard(move)
+
+        if (isPromiseLike(moveAccepted)) {
+          // Holding a suspended operation across network latency keeps the
+          // drag feedback active after pointer-up. Finish the native drop now;
+          // the optimistic columns below own cache reconciliation only.
+          suspension.resume()
+          void Promise.resolve(moveAccepted).then(
+            (accepted) => settleCardMove(accepted, false),
+            () => settleCardMove(false, false),
+          )
+        } else {
+          settleCardMove(moveAccepted, true)
+        }
+      } catch {
+        settleCardMove(false, true)
+      }
     },
-    [columns, getCardDragId, onMoveCard, resetDragState, updatePreviewColumns],
+    [getCardDragId, onMoveCard, updateOptimisticColumns],
   )
 
   return {
-    activeCard,
     cardDragEnabled: Boolean(onMoveCard),
     getCardDragId,
-    handleDragCancel: resetDragState,
     handleDragEnd,
     handleDragOver,
     handleDragStart,
-    sensors,
-    visibleColumns: previewColumns ?? columns,
+    reconciliationKey,
+    visibleColumns: optimisticColumns ?? columns,
   }
+}
+
+function isPendingCardMoveConfirmed<TCard>(
+  columns: KanbanColumnData<TCard>[],
+  pendingCardMove: PendingCardMove,
+  getCardDragId: (card: TCard) => string,
+): boolean {
+  const cardLocation = findCardLocation(columns, pendingCardMove.cardDragId, getCardDragId)
+
+  return (
+    cardLocation?.columnId === pendingCardMove.targetColumnId &&
+    (pendingCardMove.targetIndex === undefined ||
+      cardLocation.cardIndex === pendingCardMove.targetIndex)
+  )
+}
+
+function isPromiseLike(value: boolean | Promise<boolean>): value is Promise<boolean> {
+  return typeof value === 'object' && value !== null && 'then' in value
+}
+
+function cloneColumnOrder<TCard>(columns: KanbanColumnData<TCard>[]): KanbanColumnData<TCard>[] {
+  return columns.map((column) => ({ ...column, cards: [...column.cards] }))
 }

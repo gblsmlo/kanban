@@ -1,8 +1,7 @@
-import type { UniqueIdentifier } from '@dnd-kit/core'
-import { useDroppable } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CollisionPriority } from '@dnd-kit/abstract'
+import { useDroppable } from '@dnd-kit/react'
 import type { ReactNode } from 'react'
-import { useId, useMemo } from 'react'
+import { useId } from 'react'
 import { ScrollArea } from '../../components/scroll-area'
 import { Text } from '../../components/text'
 import { cn } from '../../lib/utils'
@@ -18,7 +17,7 @@ export interface KanbanColumnProps<TCard = unknown> {
   getKey: (card: TCard) => string | number
   emptyLabel?: string
   className?: string
-  getCardDragId?: (card: TCard) => UniqueIdentifier
+  getCardDragId?: (card: TCard) => string
   getCardLabel?: (card: TCard) => string
   sortableCards?: boolean
 }
@@ -60,10 +59,9 @@ function KanbanColumnHeader<TCard>({
 }
 
 interface KanbanColumnCardsProps<TCard> {
-  cardDragIds: UniqueIdentifier[]
   column: KanbanColumnData<TCard>
   emptyLabel: string
-  getCardDragId?: (card: TCard) => UniqueIdentifier
+  getCardDragId?: (card: TCard) => string
   getCardLabel: (card: TCard) => string
   getKey: (card: TCard) => string | number
   renderCard: (card: TCard) => ReactNode
@@ -71,7 +69,6 @@ interface KanbanColumnCardsProps<TCard> {
 }
 
 function KanbanColumnCards<TCard>({
-  cardDragIds,
   column,
   emptyLabel,
   getCardDragId,
@@ -88,20 +85,17 @@ function KanbanColumnCards<TCard>({
     return column.cards.map((card) => <div key={getKey(card)}>{renderCard(card)}</div>)
   }
 
-  return (
-    <SortableContext items={cardDragIds} strategy={verticalListSortingStrategy}>
-      {column.cards.map((card) => (
-        <SortableKanbanCard
-          columnId={column.id}
-          dragLabel={`Mover card ${getCardLabel(card)}`}
-          id={getCardDragId(card)}
-          key={getKey(card)}
-        >
-          {renderCard(card)}
-        </SortableKanbanCard>
-      ))}
-    </SortableContext>
-  )
+  return column.cards.map((card, index) => (
+    <SortableKanbanCard
+      columnId={column.id}
+      dragLabel={`Mover card ${getCardLabel(card)}`}
+      id={getCardDragId(card)}
+      index={index}
+      key={getKey(card)}
+    >
+      {renderCard(card)}
+    </SortableKanbanCard>
+  ))
 }
 
 export function KanbanColumn<TCard>({
@@ -116,15 +110,14 @@ export function KanbanColumn<TCard>({
 }: KanbanColumnProps<TCard>) {
   const instanceId = useId()
   const titleId = `kanban-column-title-${instanceId}`
-  const { setNodeRef } = useDroppable({
+  const { ref } = useDroppable({
+    accept: 'kanban-card',
+    collisionPriority: CollisionPriority.Lowest,
     id: createColumnDropId(column.id, instanceId),
     data: { columnId: column.id, type: 'column' },
     disabled: !sortableCards,
+    type: 'kanban-column',
   })
-  const cardDragIds = useMemo(
-    () => (sortableCards && getCardDragId ? column.cards.map(getCardDragId) : []),
-    [column.cards, getCardDragId, sortableCards],
-  )
 
   return (
     <section
@@ -137,9 +130,8 @@ export function KanbanColumn<TCard>({
       <KanbanColumnHeader column={column} titleId={titleId} />
 
       <ScrollArea className="min-h-0 flex-1" fill scrollbarGutter scrollFade>
-        <div ref={setNodeRef} className="grid h-full min-h-full content-start gap-2 px-2 pb-2">
+        <div ref={ref} className="grid h-full min-h-full content-start gap-2 px-2 pb-2">
           <KanbanColumnCards
-            cardDragIds={cardDragIds}
             column={column}
             emptyLabel={emptyLabel}
             getCardDragId={getCardDragId}

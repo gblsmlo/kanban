@@ -1,4 +1,4 @@
-import { closestCorners, DndContext, DragOverlay } from '@dnd-kit/core'
+import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { ScrollArea } from '../../components/scroll-area'
@@ -17,7 +17,7 @@ export interface KanbanViewProps<TCard = unknown> {
   getCardLabel?: (card: TCard) => string
   emptyColumnLabel?: string
   mobileStageHint?: string
-  onMoveCard?: (move: KanbanCardMove<TCard>) => boolean
+  onMoveCard?: (move: KanbanCardMove<TCard>) => boolean | Promise<boolean>
 }
 
 export function KanbanView<TCard>({
@@ -31,18 +31,25 @@ export function KanbanView<TCard>({
 }: KanbanViewProps<TCard>) {
   const [activeColumnId, setActiveColumnId] = useActiveColumnId(columns)
   const {
-    activeCard,
     cardDragEnabled,
     getCardDragId,
-    handleDragCancel,
     handleDragEnd,
     handleDragOver,
     handleDragStart,
-    sensors,
+    reconciliationKey,
     visibleColumns,
   } = useKanbanDragAndDrop({ columns, getKey, onMoveCard })
   const { isDragging: isBoardDragging, viewportProps } = useHorizontalDragScroll()
   const stageOptions = useMemo(() => createStageOptions(columns), [columns])
+  const cardsByDragId = useMemo(
+    () =>
+      new Map(
+        visibleColumns.flatMap((column) =>
+          column.cards.map((card) => [getCardDragId(card), card] as const),
+        ),
+      ),
+    [getCardDragId, visibleColumns],
+  )
   const activeColumn = useMemo(
     () => visibleColumns.find((column) => column.id === activeColumnId) ?? visibleColumns[0],
     [activeColumnId, visibleColumns],
@@ -58,13 +65,10 @@ export function KanbanView<TCard>({
 
   return (
     <div className="h-full min-h-0">
-      <DndContext
-        collisionDetection={closestCorners}
-        onDragCancel={handleDragCancel}
+      <DragDropProvider
         onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
         onDragStart={handleDragStart}
-        sensors={sensors}
       >
         <div className="flex h-full min-h-0 flex-col gap-2">
           <KanbanStageSelector
@@ -86,23 +90,33 @@ export function KanbanView<TCard>({
             scrollbarGutter
             scrollFade
             viewportProps={{
-              ...viewportProps,
-              className: isBoardDragging ? 'cursor-grabbing select-none' : 'cursor-grab',
+              ...(cardDragEnabled ? viewportProps : {}),
+              className: cardDragEnabled
+                ? isBoardDragging
+                  ? 'cursor-grabbing select-none'
+                  : 'cursor-grab'
+                : 'cursor-default',
               'data-kanban-board-viewport': '',
             }}
           >
-            <div className="grid h-full min-h-full w-max auto-cols-[minmax(19rem,22rem)] grid-flow-col gap-2">
+            <div
+              className="grid h-full min-h-full w-max auto-cols-[minmax(19rem,22rem)] grid-flow-col gap-2"
+              data-kanban-reconciliation-key={reconciliationKey}
+              key={reconciliationKey}
+            >
               {visibleColumns.map((column) => (
                 <KanbanColumn column={column} key={column.id} {...columnProps} />
               ))}
             </div>
           </ScrollArea>
         </div>
-
-        <DragOverlay dropAnimation={null} zIndex={20}>
-          {activeCard ? <div className="pointer-events-none">{renderCard(activeCard)}</div> : null}
+        <DragOverlay className="pointer-events-none" dropAnimation={null}>
+          {(source) => {
+            const card = cardsByDragId.get(String(source.id))
+            return card ? renderCard(card) : null
+          }}
         </DragOverlay>
-      </DndContext>
+      </DragDropProvider>
     </div>
   )
 }

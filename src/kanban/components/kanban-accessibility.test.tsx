@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { DndContext } from '@dnd-kit/core'
+import { DragDropProvider } from '@dnd-kit/react'
 
 await import('../../test/dom')
 
-const { act, cleanup, render, screen } = await import('@testing-library/react')
+const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react')
 const { KanbanColumn } = await import('./kanban-column')
 const { KanbanStageSelector } = await import('./kanban-stage-selector')
+const { KanbanView } = await import('./kanban-view')
+
+window.HTMLElement.prototype.scrollIntoView = () => undefined
 
 afterEach(cleanup)
 
@@ -19,10 +22,10 @@ const emptyColumn = {
 describe('Kanban accessibility', () => {
   test('creates unique heading ids for duplicate responsive column instances', async () => {
     render(
-      <DndContext>
+      <DragDropProvider>
         <KanbanColumn column={emptyColumn} getKey={(card) => String(card)} renderCard={String} />
         <KanbanColumn column={emptyColumn} getKey={(card) => String(card)} renderCard={String} />
-      </DndContext>,
+      </DragDropProvider>,
     )
     await act(async () => undefined)
 
@@ -54,7 +57,62 @@ describe('Kanban accessibility', () => {
     expect(new Set(labels.map((label) => label.id)).size).toBe(2)
   })
 
-  test('exposes keyboard drag semantics without making a nested button invalid', async () => {
+  test('uses a nested control as the single keyboard drag activator', async () => {
+    const column = {
+      cards: [{ id: 'card-1' }, { id: 'card-2' }],
+      count: 2,
+      id: 'backlog',
+      title: 'Backlog',
+    }
+
+    let dragStarts = 0
+    const { container } = render(
+      <DragDropProvider
+        onDragStart={() => {
+          dragStarts += 1
+        }}
+      >
+        <KanbanColumn
+          column={column}
+          getCardDragId={(card) => `kanban-card:${card.id}`}
+          getCardLabel={(card) => card.id}
+          getKey={(card) => card.id}
+          renderCard={(card) => <button type="button">Abrir {card.id}</button>}
+          sortableCards
+        />
+      </DragDropProvider>,
+    )
+    await act(async () => undefined)
+
+    const draggable = screen.getByRole('region', { name: 'Mover card card-1' })
+    const buttons = screen.getAllByRole('button')
+    const button = screen.getByRole('button', { name: 'Abrir card-1' })
+
+    await waitFor(() => expect(button.getAttribute('aria-describedby')).toBeTruthy())
+
+    for (const card of screen.getAllByRole('region', { name: /Mover card/ })) {
+      expect(card.hasAttribute('tabindex')).toBeFalse()
+    }
+    expect(draggable.hasAttribute('aria-pressed')).toBeFalse()
+    expect(button.getAttribute('aria-roledescription')).toBe('draggable')
+    expect(button.getAttribute('aria-describedby')).toBeTruthy()
+    expect(Array.from(container.querySelectorAll('[tabindex="0"], button'))).toEqual(buttons)
+
+    button.focus()
+    fireEvent.keyDown(button, { code: 'Enter', key: 'Enter' })
+    await act(async () => undefined)
+    expect(dragStarts).toBe(0)
+
+    fireEvent.keyDown(button, { code: 'Space', key: ' ' })
+    await act(async () => undefined)
+    expect(dragStarts).toBe(1)
+
+    fireEvent.keyDown(button, { code: 'Space', key: ' ' })
+    await act(async () => undefined)
+    expect(dragStarts).toBe(1)
+  })
+
+  test('keeps text fields separate from the keyboard drag activator', async () => {
     const column = {
       cards: [{ id: 'card-1' }],
       count: 1,
@@ -63,25 +121,70 @@ describe('Kanban accessibility', () => {
     }
 
     render(
-      <DndContext>
+      <DragDropProvider>
         <KanbanColumn
           column={column}
           getCardDragId={(card) => `kanban-card:${card.id}`}
           getCardLabel={(card) => card.id}
           getKey={(card) => card.id}
-          renderCard={() => <button type="button">Abrir card</button>}
+          renderCard={() => <input aria-label="Título do card" />}
           sortableCards
         />
-      </DndContext>,
+      </DragDropProvider>,
     )
     await act(async () => undefined)
 
-    const draggable = screen.getByRole('region', { name: 'Mover card card-1' })
+    await waitFor(() =>
+      expect(screen.getByLabelText('Mover card card-1').getAttribute('tabindex')).toBe('0'),
+    )
+    expect(
+      screen.getByRole('textbox', { name: 'Título do card' }).hasAttribute('aria-describedby'),
+    ).toBeFalse()
+  })
 
-    expect(draggable.getAttribute('aria-roledescription')).toBe('card arrastável')
-    expect(draggable.getAttribute('aria-describedby')).toBeTruthy()
-    expect(draggable.hasAttribute('aria-pressed')).toBeFalse()
-    expect(draggable.getAttribute('tabindex')).toBe('0')
-    expect(screen.getByRole('button', { name: 'Abrir card' })).toBeTruthy()
+  test('keeps a read-only board passive with the default pointer', async () => {
+    const column = {
+      cards: [{ id: 'card-1' }],
+      count: 1,
+      id: 'backlog',
+      title: 'Backlog',
+    }
+
+    const { container } = render(
+      <KanbanView
+        columns={[column]}
+        getKey={(card) => card.id}
+        renderCard={(card) => <article>{card.id}</article>}
+      />,
+    )
+    await act(async () => undefined)
+
+    const viewport = container.querySelector<HTMLElement>('[data-kanban-board-viewport]')
+    expect(viewport).not.toBeNull()
+    expect(viewport?.classList.contains('cursor-default')).toBeTrue()
+    expect(viewport?.classList.contains('cursor-grab')).toBeFalse()
+    expect(container.querySelector('[data-kanban-card-draggable]')).toBeNull()
+
+    Object.defineProperties(viewport!, {
+      clientWidth: { configurable: true, value: 300 },
+      scrollWidth: { configurable: true, value: 900 },
+    })
+    fireEvent.pointerDown(viewport!, {
+      button: 0,
+      clientX: 200,
+      clientY: 20,
+      isPrimary: true,
+      pointerId: 1,
+    })
+    fireEvent.pointerMove(viewport!, {
+      buttons: 1,
+      clientX: 100,
+      clientY: 20,
+      isPrimary: true,
+      pointerId: 1,
+    })
+
+    expect(viewport?.scrollLeft).toBe(0)
+    expect(viewport?.hasAttribute('data-drag-scrolling')).toBeFalse()
   })
 })
