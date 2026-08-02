@@ -74,7 +74,7 @@ export function SortableKanbanCard({
     <section
       aria-label={dragLabel}
       className={cn(
-        'relative min-w-0 max-w-full touch-none overflow-hidden rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'relative min-w-0 max-w-full touch-none rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'cursor-grab active:cursor-grabbing',
         isDragSource && 'opacity-0',
       )}

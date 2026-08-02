@@ -181,9 +181,11 @@ only composes its card-specific geometry and loading semantics.
 ### Long consumer content
 
 Kanban columns, sortable wrappers, and cards clamp their intrinsic width so a
-long unbroken value cannot resize a column or the board. The card clips visual
-overflow as a final layout safeguard. The consumer still owns how a tag is
-presented and made fully available—for example, combine `max-w-full`,
+long unbroken value cannot resize a column or the board. The sortable wrapper
+does not clip overflow, keeping tooltips, menus, focus halos, and shadows under
+consumer control. The card clips visual overflow as a final layout safeguard,
+which the consumer can override when needed. The consumer still owns how a tag
+is presented and made fully available—for example, combine `max-w-full`,
 `truncate`, and a `title` or tooltip containing the complete label. The `Card`
 story demonstrates that strategy with a long tag; wrapping is equally valid
 when it better matches the product.

@@ -73,6 +73,7 @@ describe('Kanban accessibility', () => {
       expect(cardContainer.className).toContain('min-w-0')
       expect(cardContainer.className).toContain('max-w-full')
     }
+    expect(cardContainers[1]?.className).not.toContain('overflow-hidden')
   })
 
   test('creates unique stage selector labels when id is omitted', async () => {
