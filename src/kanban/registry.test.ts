@@ -14,11 +14,16 @@ interface RegistryItem {
   registryDependencies?: string[]
 }
 
+interface PackageManifest {
+  dependencies?: Record<string, string>
+}
+
 const manifest = JSON.parse(readFileSync('registry.json', 'utf8')) as {
   items: RegistryItem[]
 }
 const distributedItem = JSON.parse(readFileSync('registry/kanban.json', 'utf8')) as RegistryItem
 const manifestItem = manifest.items.find((item) => item.name === 'kanban')
+const packageManifest = JSON.parse(readFileSync('package.json', 'utf8')) as PackageManifest
 
 function findSourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -99,5 +104,37 @@ describe('Kanban registry', () => {
     for (const path of kanbanSources) {
       expect(readFileSync(path, 'utf8')).not.toContain("from '@base-ui/react")
     }
+  })
+
+  test('ships the current dnd-kit React sorting contract without legacy adapters', () => {
+    const currentPackages = [
+      '@dnd-kit/abstract',
+      '@dnd-kit/collision',
+      '@dnd-kit/dom',
+      '@dnd-kit/helpers',
+      '@dnd-kit/react',
+    ]
+    const packageDependencies = packageManifest.dependencies ?? {}
+    const registryDependencies = distributedItem.dependencies ?? []
+    const source = findSourceFiles('src/kanban')
+      .filter((path) => /\.[jt]sx?$/.test(path) && !path.includes('.test.'))
+      .map((path) => readFileSync(path, 'utf8'))
+      .join('\n')
+    const distributedSource = distributedItem.files.map((file) => file.content ?? '').join('\n')
+
+    for (const packageName of currentPackages) {
+      expect(packageDependencies[packageName]).toBe('0.5.0')
+      expect(registryDependencies).toContain(`${packageName}@0.5.0`)
+    }
+
+    expect(source).toContain("from '@dnd-kit/react'")
+    expect(source).toContain("from '@dnd-kit/react/sortable'")
+    expect(source).toContain("from '@dnd-kit/helpers'")
+    expect(source).not.toContain("from '@dnd-kit/core'")
+    expect(source).not.toContain('SortableContext')
+    expect(source).not.toContain('useSensors')
+    expect(source).not.toContain('CSS.Transform')
+    expect(distributedSource).not.toContain("from '@dnd-kit/core'")
+    expect(distributedSource).not.toContain('SortableContext')
   })
 })
