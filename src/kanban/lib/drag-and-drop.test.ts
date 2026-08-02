@@ -1,40 +1,90 @@
 import { describe, expect, test } from 'bun:test'
+import type { DragEndEvent, DragOverEvent } from '@dnd-kit/react'
 
 import type { KanbanColumnData } from '../types'
 import {
   createCardDragId,
   createColumnDropId,
-  findCardInsertIndex,
-  moveCardToPreviewColumn,
   parseCardDragId,
   parseColumnId,
-  resolveCardMove,
-  resolveTargetColumnId,
+  projectKanbanColumns,
+  resolveKanbanCardMove,
 } from './drag-and-drop'
 
 interface CardFixture {
   id: string
 }
 
-const columns: KanbanColumnData<CardFixture>[] = [
+const getCardDragId = (card: CardFixture) => createCardDragId(card.id)
+
+const fiveCardColumns: KanbanColumnData<CardFixture>[] = [
   {
-    id: 'backlog',
-    title: 'Backlog',
-    count: 2,
-    cards: [{ id: 'card-1' }, { id: 'card-2' }],
-  },
-  {
-    id: 'review',
-    title: 'Review',
-    count: 1,
-    cards: [{ id: 'card-3' }],
+    cards: [1, 2, 3, 4, 5].map((position) => ({ id: `card-${position}` })),
+    count: 5,
+    id: 'priority',
+    title: 'Priority',
   },
 ]
 
-const getCardDragId = (card: CardFixture) => createCardDragId(card.id)
+interface SortableEventOptions {
+  currentGroup?: string
+  currentIndex: number
+  initialGroup?: string
+  initialIndex: number
+  sourceId: string
+  target?: {
+    columnId?: string
+    id: string
+    type: 'card' | 'column'
+    y?: number
+  }
+}
 
-describe('kanban drag-and-drop', () => {
-  test('creates and parses stable drag identifiers', () => {
+function sortableEvent({
+  currentGroup = 'priority',
+  currentIndex,
+  initialGroup = 'priority',
+  initialIndex,
+  sourceId,
+  target,
+}: SortableEventOptions): DragEndEvent {
+  const manager = {
+    dragOperation: {
+      position: { current: { x: 0, y: target?.y ?? 0 } },
+      shape: { current: { center: { x: 0, y: target?.y ?? 0 } } },
+    },
+  }
+  const source = {
+    data: { cardId: parseCardDragId(sourceId), type: 'card' },
+    group: currentGroup,
+    id: sourceId,
+    index: currentIndex,
+    initialGroup,
+    initialIndex,
+    manager,
+  }
+
+  return {
+    canceled: false,
+    operation: {
+      source,
+      target: target
+        ? {
+            data: { columnId: target.columnId, type: target.type },
+            id: target.id,
+            shape: { center: { x: 0, y: 50 } },
+          }
+        : source,
+    },
+  } as unknown as DragEndEvent
+}
+
+function cardIds(columns: KanbanColumnData<CardFixture>[], columnId = 'priority') {
+  return columns.find((column) => column.id === columnId)?.cards.map((card) => card.id)
+}
+
+describe('kanban dnd-kit adapter', () => {
+  test('creates stable card and column identifiers', () => {
     expect(createCardDragId('card-1')).toBe('kanban-card:card-1')
     expect(parseCardDragId('kanban-card:card-1')).toBe('card-1')
     expect(parseColumnId(createColumnDropId('backlog'))).toBe('backlog')
@@ -44,124 +94,116 @@ describe('kanban drag-and-drop', () => {
     )
   })
 
-  test('resolves the target column from drag data before the droppable id', () => {
-    expect(resolveTargetColumnId(createColumnDropId('backlog'), { columnId: 'review' })).toBe(
-      'review',
-    )
+  test('uses the sortable source index to move card 3 to position 1', () => {
+    const event = sortableEvent({
+      currentIndex: 0,
+      initialIndex: 2,
+      sourceId: createCardDragId('card-3'),
+    })
+
+    const projected = projectKanbanColumns(fiveCardColumns, event, getCardDragId)
+
+    expect(cardIds(projected)).toEqual(['card-3', 'card-1', 'card-2', 'card-4', 'card-5'])
+    expect(cardIds(fiveCardColumns)).toEqual(['card-1', 'card-2', 'card-3', 'card-4', 'card-5'])
   })
 
-  test('moves a card into a preview without mutating the source columns', () => {
-    const preview = moveCardToPreviewColumn(
-      columns,
-      createCardDragId('card-1'),
-      'review',
-      createCardDragId('card-3'),
+  test('places card 3 between cards 1 and 2', () => {
+    const projected = projectKanbanColumns(
+      fiveCardColumns,
+      sortableEvent({
+        currentIndex: 1,
+        initialIndex: 2,
+        sourceId: createCardDragId('card-3'),
+      }),
       getCardDragId,
     )
 
-    expect(preview[0]!.cards.map(({ id }) => id)).toEqual(['card-2'])
-    expect(preview[1]!.cards.map(({ id }) => id)).toEqual(['card-1', 'card-3'])
-    expect(columns[0]!.cards.map(({ id }) => id)).toEqual(['card-1', 'card-2'])
-    expect(columns[1]!.cards.map(({ id }) => id)).toEqual(['card-3'])
+    expect(cardIds(projected)).toEqual(['card-1', 'card-3', 'card-2', 'card-4', 'card-5'])
   })
 
-  test('keeps server-defined ordering when the card stays in its source column', () => {
-    const preview = moveCardToPreviewColumn(
-      columns,
-      createCardDragId('card-1'),
-      'backlog',
-      createCardDragId('card-2'),
+  test('keeps 1,2,3,4,5 when card 3 remains after card 2', () => {
+    const projected = projectKanbanColumns(
+      fiveCardColumns,
+      sortableEvent({
+        currentIndex: 2,
+        initialIndex: 2,
+        sourceId: createCardDragId('card-3'),
+      }),
       getCardDragId,
     )
 
-    expect(preview).toBe(columns)
+    expect(projected).toBe(fiveCardColumns)
+    expect(cardIds(projected)).toEqual(['card-1', 'card-2', 'card-3', 'card-4', 'card-5'])
   })
 
-  test('inserts at the end when hovering the target column', () => {
-    expect(
-      findCardInsertIndex(columns, 'review', createColumnDropId('review'), getCardDragId),
-    ).toBe(1)
-  })
-
-  test('inserts after the hovered card when the pointer crosses its midpoint', () => {
-    expect(
-      findCardInsertIndex(columns, 'review', createCardDragId('card-3'), getCardDragId, true),
-    ).toBe(1)
-
-    const preview = moveCardToPreviewColumn(
-      columns,
-      createCardDragId('card-1'),
-      'review',
-      createCardDragId('card-3'),
-      getCardDragId,
-      true,
-    )
-
-    expect(preview[1]!.cards.map(({ id }) => id)).toEqual(['card-3', 'card-1'])
-  })
-
-  test('keeps the requested third position in a populated target column', () => {
-    const populatedColumns: KanbanColumnData<CardFixture>[] = [
-      columns[0]!,
+  test('uses sortable groups to move a card between populated columns', () => {
+    const columns: KanbanColumnData<CardFixture>[] = [
       {
-        ...columns[1]!,
-        cards: [{ id: 'card-3' }, { id: 'card-4' }, { id: 'card-5' }],
-        count: 3,
+        cards: [{ id: 'card-1' }, { id: 'card-2' }],
+        count: 2,
+        id: 'backlog',
+        title: 'Backlog',
+      },
+      {
+        cards: [{ id: 'card-3' }],
+        count: 1,
+        id: 'review',
+        title: 'Review',
       },
     ]
+    const event = sortableEvent({
+      currentGroup: 'review',
+      currentIndex: 0,
+      initialGroup: 'backlog',
+      initialIndex: 1,
+      sourceId: createCardDragId('card-2'),
+    })
 
-    const preview = moveCardToPreviewColumn(
-      populatedColumns,
-      createCardDragId('card-1'),
-      'review',
-      createCardDragId('card-4'),
-      getCardDragId,
-      true,
-    )
+    const projected = projectKanbanColumns(columns, event, getCardDragId)
 
-    expect(preview[1]!.cards.map(({ id }) => id)).toEqual(['card-3', 'card-4', 'card-1', 'card-5'])
-  })
-
-  test('resolves the domain move from the original and preview columns', () => {
-    const preview = moveCardToPreviewColumn(
-      columns,
-      createCardDragId('card-1'),
-      'review',
-      createCardDragId('card-3'),
-      getCardDragId,
-    )
-
-    expect(
-      resolveCardMove({
-        activeDragId: createCardDragId('card-1'),
-        columns,
-        getCardDragId,
-        overData: { columnId: 'review' },
-        overId: createCardDragId('card-3'),
-        sourceColumnId: 'backlog',
-        visibleColumns: preview,
-      }),
-    ).toEqual({
-      card: { id: 'card-1' },
-      cardId: 'card-1',
+    expect(cardIds(projected, 'backlog')).toEqual(['card-1'])
+    expect(cardIds(projected, 'review')).toEqual(['card-2', 'card-3'])
+    expect(resolveKanbanCardMove(columns, projected, event, getCardDragId)).toEqual({
+      card: { id: 'card-2' },
+      cardId: 'card-2',
       sourceColumnId: 'backlog',
-      sourceIndex: 0,
+      sourceIndex: 1,
       targetColumnId: 'review',
       targetIndex: 0,
     })
   })
 
-  test('does not create a move inside the same column', () => {
-    expect(
-      resolveCardMove({
-        activeDragId: createCardDragId('card-1'),
-        columns,
-        getCardDragId,
-        overData: { columnId: 'backlog' },
-        overId: createCardDragId('card-2'),
-        sourceColumnId: 'backlog',
-        visibleColumns: columns,
-      }),
-    ).toBeUndefined()
+  test('uses the official move helper for a non-sortable empty-column target', () => {
+    const columns: KanbanColumnData<CardFixture>[] = [
+      {
+        cards: [{ id: 'card-1' }],
+        count: 1,
+        id: 'backlog',
+        title: 'Backlog',
+      },
+      { cards: [], count: 0, id: 'done', title: 'Done' },
+    ]
+    const event = sortableEvent({
+      currentGroup: 'backlog',
+      currentIndex: 0,
+      initialGroup: 'backlog',
+      initialIndex: 0,
+      sourceId: createCardDragId('card-1'),
+      target: {
+        columnId: 'done',
+        id: createColumnDropId('done', 'desktop'),
+        type: 'column',
+        y: 0,
+      },
+    })
+
+    const projected = projectKanbanColumns(
+      columns,
+      event as unknown as DragOverEvent,
+      getCardDragId,
+    )
+
+    expect(cardIds(projected, 'backlog')).toEqual([])
+    expect(cardIds(projected, 'done')).toEqual(['card-1'])
   })
 })

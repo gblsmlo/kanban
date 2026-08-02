@@ -1,9 +1,18 @@
-import type { UniqueIdentifier } from '@dnd-kit/core'
+import { move } from '@dnd-kit/helpers'
+import type { DragEndEvent, DragOverEvent } from '@dnd-kit/react'
 
 import type { KanbanCardMove, KanbanColumnData } from '../types'
 
 const CARD_DRAG_PREFIX = 'kanban-card:'
 const COLUMN_DROP_PREFIX = 'kanban-column:'
+
+type DragIdentifier = string | number
+type KanbanDragEvent = DragEndEvent | DragOverEvent
+
+interface ProjectedCard<TCard> {
+  card: TCard
+  id: string
+}
 
 export interface CardLocation<TCard> {
   card: TCard
@@ -12,11 +21,11 @@ export interface CardLocation<TCard> {
   columnIndex: number
 }
 
-export function createCardDragId(cardId: string | number): string {
+export function createCardDragId(cardId: DragIdentifier): string {
   return `${CARD_DRAG_PREFIX}${String(cardId)}`
 }
 
-export function parseCardDragId(id: UniqueIdentifier): string {
+export function parseCardDragId(id: DragIdentifier): string {
   return String(id).replace(new RegExp(`^${CARD_DRAG_PREFIX}`), '')
 }
 
@@ -27,7 +36,7 @@ export function createColumnDropId(columnId: string, instanceId?: string): strin
   return `${COLUMN_DROP_PREFIX}${columnPart}${instancePart}`
 }
 
-export function parseColumnId(id: UniqueIdentifier): string {
+export function parseColumnId(id: DragIdentifier): string {
   const value = String(id)
 
   if (!value.startsWith(COLUMN_DROP_PREFIX)) return ''
@@ -41,17 +50,10 @@ export function parseColumnId(id: UniqueIdentifier): string {
   }
 }
 
-export function resolveTargetColumnId(
-  overId: UniqueIdentifier,
-  overData: Record<string, unknown> | undefined,
-): string {
-  return typeof overData?.columnId === 'string' ? overData.columnId : parseColumnId(overId)
-}
-
 export function findCardLocation<TCard>(
   columns: KanbanColumnData<TCard>[],
   cardDragId: string,
-  getCardDragId: (card: TCard) => UniqueIdentifier,
+  getCardDragId: (card: TCard) => DragIdentifier,
 ): CardLocation<TCard> | undefined {
   for (const [columnIndex, column] of columns.entries()) {
     const cardIndex = column.cards.findIndex((card) => String(getCardDragId(card)) === cardDragId)
@@ -67,98 +69,99 @@ export function findCardLocation<TCard>(
   }
 }
 
-export function findCardInsertIndex<TCard>(
+/**
+ * Projects the consumer's columns with dnd-kit's official `move` helper.
+ * Sortable cards use the indices and groups maintained by the library. A plain
+ * column target only adapts the instance-scoped droppable id to the logical
+ * column id, which is the additional case required for empty lists.
+ */
+export function projectKanbanColumns<TCard>(
   columns: KanbanColumnData<TCard>[],
-  targetColumnId: string,
-  overId: UniqueIdentifier,
-  getCardDragId: (card: TCard) => UniqueIdentifier,
-  insertAfter = false,
-): number | undefined {
-  const targetColumn = columns.find((column) => column.id === targetColumnId)
-  if (!targetColumn) return undefined
-
-  if (parseColumnId(overId) === targetColumnId) return targetColumn.cards.length
-
-  const overCardIndex = targetColumn.cards.findIndex(
-    (card) => String(getCardDragId(card)) === String(overId),
-  )
-
-  if (overCardIndex === -1) return targetColumn.cards.length
-  return overCardIndex + Number(insertAfter)
-}
-
-export function moveCardToPreviewColumn<TCard>(
-  columns: KanbanColumnData<TCard>[],
-  activeDragId: string,
-  targetColumnId: string,
-  overId: UniqueIdentifier,
-  getCardDragId: (card: TCard) => UniqueIdentifier,
-  insertAfter = false,
+  event: KanbanDragEvent,
+  getCardDragId: (card: TCard) => DragIdentifier,
 ): KanbanColumnData<TCard>[] {
-  const sourceLocation = findCardLocation(columns, activeDragId, getCardDragId)
-  if (!sourceLocation || sourceLocation.columnId === targetColumnId) return columns
+  const target = event.operation.target
+  const targetColumnId =
+    target?.data.type === 'column' && typeof target.data.columnId === 'string'
+      ? target.data.columnId
+      : undefined
+  const collectionKeys = new Map<string, string>()
+  const collections = Object.fromEntries(
+    columns.map((column) => {
+      const collectionKey = column.id === targetColumnId && target ? String(target.id) : column.id
+      collectionKeys.set(column.id, collectionKey)
 
-  const targetColumnIndex = columns.findIndex((column) => column.id === targetColumnId)
-  if (targetColumnIndex === -1) return columns
+      return [
+        collectionKey,
+        column.cards.map((card) => ({ card, id: String(getCardDragId(card)) })),
+      ]
+    }),
+  ) as Record<string, ProjectedCard<TCard>[]>
+  const projectedCollections = move(collections, event)
 
-  const targetColumn = columns[targetColumnIndex]!
-  const targetIndex = findCardInsertIndex(
-    columns,
-    targetColumnId,
-    overId,
-    getCardDragId,
-    insertAfter,
-  )
-  const boundedTargetIndex = Math.max(
-    0,
-    Math.min(targetIndex ?? targetColumn.cards.length, targetColumn.cards.length),
-  )
-  const previewColumns = columns.map((column) => ({ ...column, cards: [...column.cards] }))
+  if (projectedCollections === collections) return columns
 
-  previewColumns[sourceLocation.columnIndex]!.cards.splice(sourceLocation.cardIndex, 1)
-  previewColumns[targetColumnIndex]!.cards.splice(boundedTargetIndex, 0, sourceLocation.card)
+  let changed = false
+  const projectedColumns = columns.map((column) => {
+    const collectionKey = collectionKeys.get(column.id)
+    const projectedCards = collectionKey
+      ? projectedCollections[collectionKey]?.map(({ card }) => card)
+      : undefined
 
-  return previewColumns
+    if (!projectedCards || hasSameCardOrder(column.cards, projectedCards, getCardDragId)) {
+      return column
+    }
+
+    changed = true
+    return { ...column, cards: projectedCards, count: projectedCards.length }
+  })
+
+  return changed ? projectedColumns : columns
 }
 
-interface ResolveCardMoveOptions<TCard> {
-  activeDragId: string
-  columns: KanbanColumnData<TCard>[]
-  getCardDragId: (card: TCard) => UniqueIdentifier
-  overData: Record<string, unknown> | undefined
-  overId: UniqueIdentifier
-  sourceColumnId?: string | null
-  visibleColumns: KanbanColumnData<TCard>[]
-}
+export function resolveKanbanCardMove<TCard>(
+  sourceColumns: KanbanColumnData<TCard>[],
+  projectedColumns: KanbanColumnData<TCard>[],
+  event: DragEndEvent,
+  getCardDragId: (card: TCard) => DragIdentifier,
+): KanbanCardMove<TCard> | undefined {
+  const source = event.operation.source
 
-export function resolveCardMove<TCard>({
-  activeDragId,
-  columns,
-  getCardDragId,
-  overData,
-  overId,
-  sourceColumnId,
-  visibleColumns,
-}: ResolveCardMoveOptions<TCard>): KanbanCardMove<TCard> | undefined {
-  const sourceLocation = findCardLocation(columns, activeDragId, getCardDragId)
-  if (!sourceLocation) return undefined
+  if (event.canceled || !source || source.data.type !== 'card') return undefined
 
-  const previewLocation = findCardLocation(visibleColumns, activeDragId, getCardDragId)
-  const resolvedSourceColumnId = sourceColumnId || sourceLocation.columnId
-  const targetColumnId = resolveTargetColumnId(overId, overData) || previewLocation?.columnId
+  const cardDragId = String(source.id)
+  const sourceLocation = findCardLocation(sourceColumns, cardDragId, getCardDragId)
+  const targetLocation = findCardLocation(projectedColumns, cardDragId, getCardDragId)
 
-  if (!targetColumnId || targetColumnId === resolvedSourceColumnId) return undefined
-  const targetIndex =
-    previewLocation?.columnId === targetColumnId
-      ? previewLocation.cardIndex
-      : findCardInsertIndex(visibleColumns, targetColumnId, overId, getCardDragId)
+  if (
+    !sourceLocation ||
+    !targetLocation ||
+    (sourceLocation.columnId === targetLocation.columnId &&
+      sourceLocation.cardIndex === targetLocation.cardIndex)
+  ) {
+    return undefined
+  }
 
   return {
     card: sourceLocation.card,
-    cardId: parseCardDragId(activeDragId),
-    sourceColumnId: resolvedSourceColumnId,
+    cardId: parseCardDragId(cardDragId),
+    sourceColumnId: sourceLocation.columnId,
     sourceIndex: sourceLocation.cardIndex,
-    targetColumnId,
-    targetIndex,
+    targetColumnId: targetLocation.columnId,
+    targetIndex: targetLocation.cardIndex,
   }
+}
+
+function hasSameCardOrder<TCard>(
+  currentCards: TCard[],
+  projectedCards: TCard[],
+  getCardDragId: (card: TCard) => DragIdentifier,
+): boolean {
+  return (
+    currentCards.length === projectedCards.length &&
+    currentCards.every(
+      (card, index) =>
+        String(getCardDragId(card)) === String(getCardDragId(projectedCards[index]!)),
+    )
+  )
 }

@@ -10,13 +10,14 @@ remote state, mutations, navigation, and persistence.
 ## Highlights
 
 - generic typed columns and consumer-rendered cards
-- accessible pointer and keyboard drag-and-drop with DnD Kit
-- cross-column insertion preview with stable card identities
+- accessible card skeleton for consumer loading states
+- accessible pointer and keyboard drag-and-drop with the current DnD Kit React API
+- native optimistic sorting within and between populated columns
 - consumer-controlled move acceptance and rollback
 - read-only mode when `onMoveCard` is omitted
 - responsive desktop board and mobile stage selector
 - horizontal desktop scrolling by clicking, holding, and dragging the board
-- minimal drag motion and a dedicated overlay
+- minimal drag motion with DnD Kit DragOverlay, feedback, and accessibility plugins
 - COSS visual primitives implemented on Base UI
 
 ## Requirements
@@ -29,6 +30,14 @@ The package is COSS-first. COSS is distributed as source through its component
 registry, so this repository owns the small set of COSS primitives required by
 the view. A future Radix implementation will be a separate adapter and will not
 change the domain-neutral contract.
+
+`KanbanCardSkeleton` uses the canonical
+[COSS Skeleton](https://coss.com/ui/docs/components/skeleton). The npm build
+bundles the
+[upstream `ui/skeleton` source](https://github.com/cosscom/coss/blob/main/apps/ui/registry/default/ui/skeleton.tsx)
+locally because COSS components are copy-owned. The source registry instead
+declares `@coss/skeleton`, which installs the primitive at
+`@/components/ui/skeleton` through the consumer's `ui` alias.
 
 ## Installation
 
@@ -74,11 +83,15 @@ bun add @tc96/kanban
 bunx shadcn@latest add ./node_modules/@tc96/kanban/registry/kanban.json
 ```
 
-The registry item targets `@components/patterns/kanban`, which resolves through
-`aliases.components` and keeps `./components/ui` untouched.
+The registry item targets `@components/patterns/kanban` for the pattern source
+and declares `@coss/skeleton` as a registry dependency. The shadcn CLI therefore
+installs the COSS primitive through `aliases.ui` while keeping the Kanban source
+under `./components/patterns/kanban`.
 
 Tailwind must scan the installed package and your theme must expose the standard
-COSS semantic tokens:
+COSS semantic tokens. The official
+[COSS styling preset](https://coss.com/ui/docs/styling) also provides
+`--animate-skeleton` and its keyframes:
 
 ```css
 @import "tailwindcss";
@@ -105,7 +118,7 @@ export function Board({
   moveRecord,
 }: {
   columns: KanbanColumnData<RecordItem>[];
-  moveRecord: (move: KanbanCardMove<RecordItem>) => boolean;
+  moveRecord: (move: KanbanCardMove<RecordItem>) => boolean | Promise<boolean>;
 }) {
   return (
     <KanbanView
@@ -123,25 +136,68 @@ export function Board({
 }
 ```
 
-Omit `onMoveCard` to render a read-only board. Returning `false` from the
-callback rejects the interaction and restores the previous view.
+Omit `onMoveCard` to render a read-only board. Returning or resolving `false`
+rejects the interaction and restores the previous view. A rejected optimistic
+mutation must also restore the consumer-owned cache.
 
-Use `@tc96/kanban/core` when a non-visual layer only needs the public types
-and drag-and-drop calculation helpers.
+`onMoveCard` is also called when a card changes position inside its current
+column. In that case, `sourceColumnId` and `targetColumnId` are equal while
+`sourceIndex` and `targetIndex` describe the requested reorder. Apply and
+persist that ordering in the consumer, update `columns`, and return `true` to
+keep the preview. For asynchronous persistence, return `Promise<boolean>`.
+While it is pending, the requested order stays visible even if `columns`
+temporarily receives an older cache snapshot. Resolve `true` after the
+canonical data accepts the order, or roll the consumer cache back and resolve
+`false` when persistence fails.
+
+The board uses `DragDropProvider`, `useSortable`, sortable `group`/`index`, the
+native `OptimisticSortingPlugin`, and the official `move()` helper. The plugin
+reorders the DOM during sortable drag-over without forcing a React list render.
+The current `DragOverlay` source callback renders the moving card without
+package-owned active-card state, leaving the original sortable element free to
+occupy the optimistic slot.
+React state is used only when a plain column droppable is needed to enter an
+empty list and after drop to shield the optimistic order from stale consumer
+snapshots. There is no package-owned before/after collision algorithm.
+
+### Loading cards
+
+Use `KanbanCardSkeleton` while card data is unavailable. It preserves the card
+surface without creating placeholder domain records or enabling drag behavior:
+
+```tsx
+import { KanbanCardSkeleton } from "@tc96/kanban";
+
+export function LoadingCard() {
+  return <KanbanCardSkeleton label="Loading task" />;
+}
+```
+
+The skeleton exposes `role="status"` and `aria-busy="true"`. Its `label` is
+announced by assistive technology while its visual placeholders remain
+decorative. Its visual primitive is the COSS `ui/skeleton`; the Kanban package
+only composes its card-specific geometry and loading semantics.
+
+For sortable cards with an interactive action, the first button or link is also
+the keyboard drag activator. Press `Space` to drag or `Enter` to keep the
+control's normal action without adding a second `Tab` stop.
+
+Use `@tc96/kanban/core` when a non-visual layer only needs the public types and
+the DnD Kit event-to-Kanban projection helpers.
 
 ## Ownership boundary
 
 | Package owns | Consumer owns |
 | --- | --- |
 | board layout and responsive stage navigation | business meaning and order of stages |
-| accessible drag sensors and insertion preview | permission to move a specific card |
+| DnD Kit sensor configuration and native sortable preview | permission to move a specific card |
 | stable visual card and column identities | server state and canonical ordering |
-| local acceptance or rollback behavior | mutations, optimistic updates, and errors |
+| visual reconciliation while a move is pending | mutations, optimistic updates, rollback, and errors |
 | presentation-level move callback | workflows, automation, and persistence |
 
-The package intentionally supports cross-column movement only. Reordering
-inside the same column remains consumer/server-owned until a durable ordering
-contract is defined.
+The package reports both cross-column moves and same-column reorders through
+`onMoveCard`. The consumer remains responsible for its ordering rules and for
+persisting the requested `targetIndex`.
 
 ## Development
 
@@ -153,6 +209,7 @@ bun run storybook
 bun run lint:ci
 bun run typecheck
 bun test
+bun run test:storybook
 bun run build
 ```
 

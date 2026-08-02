@@ -4,6 +4,7 @@ await import('../../test/dom')
 
 const { cleanup, render, screen } = await import('@testing-library/react')
 const { KanbanCard } = await import('./kanban-card')
+const { KanbanCardSkeleton } = await import('./kanban-card-skeleton')
 
 afterEach(cleanup)
 
@@ -43,5 +44,23 @@ describe('KanbanCard', () => {
     const section = screen.getByTestId('section')
 
     expect(section.parentElement?.getAttribute('data-slot')).toBe('card')
+  })
+})
+
+describe('KanbanCardSkeleton', () => {
+  test('renders a passive, accessible loading placeholder with the card dimensions', () => {
+    const { container } = render(
+      <KanbanCardSkeleton className="loading-card" label="Carregando tarefa" />,
+    )
+
+    const card = screen.getByRole('status', { name: 'Carregando tarefa' })
+    const placeholders = container.querySelectorAll('[data-slot="skeleton"]')
+
+    expect(card.tagName).toBe('ARTICLE')
+    expect(card.getAttribute('aria-busy')).toBe('true')
+    expect(card.className).toContain('loading-card')
+    expect(card.className).toContain('pointer-events-none')
+    expect(placeholders.length).toBe(4)
+    expect(placeholders[0]?.className).toContain('animate-skeleton')
   })
 })
