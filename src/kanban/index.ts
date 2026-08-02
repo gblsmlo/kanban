@@ -13,6 +13,7 @@ export { KanbanView } from './components/kanban-view'
 export { useActiveColumnId } from './hooks/use-active-column-id'
 export type {
   KanbanCardMove,
+  KanbanColumnActions,
   KanbanColumnData,
   KanbanStageOption,
 } from './types'
