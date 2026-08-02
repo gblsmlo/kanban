@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test'
 
 await import('../../test/dom')
 
-const { cleanup, render, screen } = await import('@testing-library/react')
+const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react')
 const {
   KanbanCard,
   KanbanCardAction,
@@ -106,6 +106,47 @@ describe('KanbanCard', () => {
     expect(card.className).toContain('max-w-full')
     expect(card.className).toContain('overflow-hidden')
   })
+
+  test('keeps full as the default display while consumers control compact content', () => {
+    const { rerender } = render(
+      <KanbanCard data-testid="card">
+        <KanbanCardHeader>
+          <KanbanCardTitle>Título</KanbanCardTitle>
+          <KanbanCardDescription>Descrição detalhada</KanbanCardDescription>
+          <div data-compact-visible="false" data-testid="compact-metadata" hidden>
+            Consumer content
+          </div>
+        </KanbanCardHeader>
+        <KanbanCardContent>Conteúdo completo</KanbanCardContent>
+        <KanbanCardFooter>Rodapé completo</KanbanCardFooter>
+      </KanbanCard>,
+    )
+
+    const card = screen.getByTestId('card')
+    const compactMetadata = screen.getByTestId('compact-metadata')
+
+    expect(card.getAttribute('data-display')).toBe('full')
+    expect(compactMetadata.getAttribute('data-compact-visible')).toBe('false')
+    expect(compactMetadata.querySelector('[data-slot="tooltip-trigger"]')).toBeNull()
+
+    rerender(
+      <KanbanCard data-testid="card" display="compact">
+        <KanbanCardHeader>
+          <KanbanCardTitle>Título</KanbanCardTitle>
+          <KanbanCardDescription>Descrição detalhada</KanbanCardDescription>
+          <div data-compact-visible="true" data-testid="compact-metadata">
+            Consumer content
+          </div>
+        </KanbanCardHeader>
+        <KanbanCardContent>Conteúdo completo</KanbanCardContent>
+        <KanbanCardFooter>Rodapé completo</KanbanCardFooter>
+      </KanbanCard>,
+    )
+
+    expect(card.getAttribute('data-display')).toBe('compact')
+    expect(compactMetadata.getAttribute('data-compact-visible')).toBe('true')
+    expect(compactMetadata.textContent).toContain('Consumer content')
+  })
 })
 
 describe('KanbanCardSkeleton', () => {
@@ -128,5 +169,19 @@ describe('KanbanCardSkeleton', () => {
       'card-panel',
       'card-footer',
     ])
+  })
+
+  test('matches the compact card geometry when requested', () => {
+    const { container } = render(
+      <KanbanCardSkeleton display="compact" label="Carregando tarefa compacta" />,
+    )
+
+    const card = screen.getByRole('status', { name: 'Carregando tarefa compacta' })
+    const placeholders = container.querySelectorAll('[data-slot="skeleton"]')
+
+    expect(card.getAttribute('data-display')).toBe('compact')
+    expect(placeholders).toHaveLength(5)
+    expect(card.children[1]?.hasAttribute('hidden')).toBeTrue()
+    expect(card.children[2]?.hasAttribute('hidden')).toBeTrue()
   })
 })

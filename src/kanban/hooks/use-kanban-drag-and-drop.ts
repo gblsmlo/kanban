@@ -29,7 +29,7 @@ export function useKanbanDragAndDrop<TCard>({
   onMoveCard,
 }: UseKanbanDragAndDropOptions<TCard>) {
   const [optimisticColumns, setOptimisticColumns] = useState<KanbanColumnData<TCard>[] | null>(null)
-  const [reconciliationKey, setReconciliationKey] = useState(0)
+  const [focusCardDragId, setFocusCardDragId] = useState<string | null>(null)
   const columnsRef = useRef(columns)
   const optimisticColumnsRef = useRef<KanbanColumnData<TCard>[] | null>(null)
   const dragSourceColumnsRef = useRef<KanbanColumnData<TCard>[] | null>(null)
@@ -62,16 +62,15 @@ export function useKanbanDragAndDrop<TCard>({
   }, [columns, getCardDragId, updateOptimisticColumns])
 
   const handleDragStart = useCallback((_event: DragStartEvent) => {
+    setFocusCardDragId(null)
     dragSourceColumnsRef.current = optimisticColumnsRef.current ?? columnsRef.current
   }, [])
+  const handleCardFocusRestored = useCallback(() => setFocusCardDragId(null), [])
 
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
       const { source, target } = event.operation
 
-      // OptimisticSortingPlugin owns sortable-to-sortable previews without a
-      // React render. dnd-kit documents plain droppable columns as the extra
-      // state-managed case needed to enter an empty list.
       if (!onMoveCard || source?.data.type !== 'card' || target?.data.type !== 'column') {
         return
       }
@@ -104,6 +103,9 @@ export function useKanbanDragAndDrop<TCard>({
         return
       }
 
+      if (move.sourceColumnId !== move.targetColumnId) {
+        setFocusCardDragId(String(event.operation.source?.id))
+      }
       updateOptimisticColumns(projectedColumns)
       rollbackSourceColumnsRef.current = null
       const requestId = moveRequestIdRef.current + 1
@@ -126,11 +128,6 @@ export function useKanbanDragAndDrop<TCard>({
           if (settleSuspension) suspension.abort()
           rollbackSourceColumnsRef.current = sourceColumns
           updateOptimisticColumns(cloneColumnOrder(sourceColumns))
-          // The optimistic plugin mutates DOM outside React and the suspended
-          // abort resets in a later microtask. Remount now and once after that
-          // reset so React's original order becomes authoritative again.
-          setReconciliationKey((current) => current + 1)
-          requestAnimationFrame(() => setReconciliationKey((current) => current + 1))
           return
         }
 
@@ -166,11 +163,12 @@ export function useKanbanDragAndDrop<TCard>({
 
   return {
     cardDragEnabled: Boolean(onMoveCard),
+    focusCardDragId,
     getCardDragId,
+    handleCardFocusRestored,
     handleDragEnd,
     handleDragOver,
     handleDragStart,
-    reconciliationKey,
     visibleColumns: optimisticColumns ?? columns,
   }
 }

@@ -1,4 +1,12 @@
-import type { ComponentProps, ReactElement, ReactNode } from 'react'
+'use client'
+
+import {
+  createContext,
+  type ComponentProps,
+  type ReactElement,
+  type ReactNode,
+  useContext,
+} from 'react'
 import {
   Card,
   CardAction,
@@ -10,8 +18,11 @@ import {
 } from '@/components/ui/card'
 import { cn } from '../../lib/utils'
 
+export type KanbanCardDisplay = 'full' | 'compact'
+
 export interface KanbanCardProps extends ComponentProps<typeof Card> {
   dimmed?: boolean
+  display?: KanbanCardDisplay
   children: ReactNode
 }
 
@@ -22,44 +33,80 @@ export type KanbanCardFooterProps = ComponentProps<typeof CardFooter>
 export type KanbanCardHeaderProps = ComponentProps<typeof CardHeader>
 export type KanbanCardTitleProps = ComponentProps<typeof CardTitle>
 
+const KanbanCardDisplayContext = createContext<KanbanCardDisplay>('full')
+
 export function KanbanCard({
   children,
   className,
   dimmed = false,
+  display = 'full',
   render = <article />,
   ...props
 }: KanbanCardProps): ReactElement {
   return (
-    <Card
-      className={cn('min-w-0 max-w-full overflow-hidden', dimmed && 'opacity-70', className)}
-      render={render}
-      {...props}
-    >
-      {children}
-    </Card>
+    <KanbanCardDisplayContext.Provider value={display}>
+      <Card
+        className={cn('min-w-0 max-w-full overflow-hidden', dimmed && 'opacity-70', className)}
+        data-display={display}
+        render={render}
+        {...props}
+      >
+        {children}
+      </Card>
+    </KanbanCardDisplayContext.Provider>
   )
 }
 
-export function KanbanCardHeader(props: KanbanCardHeaderProps): ReactElement {
-  return <CardHeader {...props} />
+export function KanbanCardHeader({ className, ...props }: KanbanCardHeaderProps): ReactElement {
+  const display = useContext(KanbanCardDisplayContext)
+
+  return (
+    <CardHeader
+      className={cn(display === 'compact' && 'flex min-w-0 items-center gap-2 p-3', className)}
+      {...props}
+    />
+  )
 }
 
-export function KanbanCardTitle(props: KanbanCardTitleProps): ReactElement {
-  return <CardTitle {...props} />
+export function KanbanCardTitle({ className, ...props }: KanbanCardTitleProps): ReactElement {
+  const display = useContext(KanbanCardDisplayContext)
+
+  return (
+    <CardTitle
+      className={cn(
+        display === 'compact' && 'min-w-0 flex-1 truncate text-sm leading-normal',
+        className,
+      )}
+      {...props}
+    />
+  )
 }
 
 export function KanbanCardDescription(props: KanbanCardDescriptionProps): ReactElement {
-  return <CardDescription {...props} />
+  const display = useContext(KanbanCardDisplayContext)
+
+  return <CardDescription {...props} hidden={display === 'compact' || props.hidden} />
 }
 
-export function KanbanCardAction(props: KanbanCardActionProps): ReactElement {
-  return <CardAction {...props} />
+export function KanbanCardAction({ className, ...props }: KanbanCardActionProps): ReactElement {
+  const display = useContext(KanbanCardDisplayContext)
+
+  return (
+    <CardAction
+      className={cn(display === 'compact' && 'shrink-0 self-center', className)}
+      {...props}
+    />
+  )
 }
 
 export function KanbanCardContent(props: KanbanCardContentProps): ReactElement {
-  return <CardContent {...props} />
+  const display = useContext(KanbanCardDisplayContext)
+
+  return <CardContent {...props} hidden={display === 'compact' || props.hidden} />
 }
 
 export function KanbanCardFooter(props: KanbanCardFooterProps): ReactElement {
-  return <CardFooter {...props} />
+  const display = useContext(KanbanCardDisplayContext)
+
+  return <CardFooter {...props} hidden={display === 'compact' || props.hidden} />
 }

@@ -178,7 +178,48 @@ describe('useKanbanDragAndDrop', () => {
     expect(ids(result.current.visibleColumns)).toEqual(['card-2', 'card-3', 'card-1'])
   })
 
-  test('does not create a React preview when the native sortable plugin owns drag-over', () => {
+  test('keeps the optimistic cross-column projection without a board remount', () => {
+    const columns: KanbanColumnData<CardFixture>[] = [
+      {
+        cards: [{ id: 'card-1' }, { id: 'card-2' }],
+        count: 2,
+        id: 'backlog',
+        title: 'Backlog',
+      },
+      {
+        cards: [{ id: 'card-3' }],
+        count: 1,
+        id: 'review',
+        title: 'Review',
+      },
+    ]
+    const events = createDragEvents({
+      currentGroup: 'review',
+      currentIndex: 0,
+      initialGroup: 'backlog',
+      initialIndex: 1,
+      sourceId: createCardDragId('card-2'),
+    })
+    const { result } = renderHook(() =>
+      useKanbanDragAndDrop({
+        columns,
+        getKey: (card: CardFixture) => card.id,
+        onMoveCard: () => true,
+      }),
+    )
+
+    act(() => result.current.handleDragStart(events.start))
+    act(() => result.current.handleDragEnd(events.end))
+
+    expect(ids(result.current.visibleColumns, 'backlog')).toEqual(['card-1'])
+    expect(ids(result.current.visibleColumns, 'review')).toEqual(['card-2', 'card-3'])
+    expect(result.current.focusCardDragId).toBe(createCardDragId('card-2'))
+
+    act(() => result.current.handleCardFocusRestored())
+    expect(result.current.focusCardDragId).toBeNull()
+  })
+
+  test('leaves sortable card drag-over previews to the DnD Kit plugin', () => {
     const events = createDragEvents({
       currentIndex: 0,
       initialIndex: 1,
@@ -300,7 +341,6 @@ describe('useKanbanDragAndDrop', () => {
 
     expect(events.abort).toHaveBeenCalledTimes(1)
     expect(events.resume).not.toHaveBeenCalled()
-    expect(result.current.reconciliationKey).toBe(1)
     expect(ids(result.current.visibleColumns)).toEqual(['card-1', 'card-2', 'card-3'])
   })
 
@@ -333,7 +373,6 @@ describe('useKanbanDragAndDrop', () => {
 
     expect(events.abort).not.toHaveBeenCalled()
     expect(ids(result.current.visibleColumns)).toEqual(['card-1', 'card-2', 'card-3'])
-    expect(result.current.reconciliationKey).toBeGreaterThanOrEqual(1)
   })
 
   test('rolls back when the persistence promise rejects with an error', async () => {
@@ -367,7 +406,6 @@ describe('useKanbanDragAndDrop', () => {
 
     expect(events.abort).not.toHaveBeenCalled()
     expect(ids(result.current.visibleColumns)).toEqual(['card-1', 'card-2', 'card-3'])
-    expect(result.current.reconciliationKey).toBeGreaterThanOrEqual(1)
   })
 
   test('does not suspend or persist an unchanged position', () => {

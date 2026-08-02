@@ -13,13 +13,14 @@ const config: StorybookConfig = {
   viteFinal: async (viteConfig) =>
     mergeConfig(viteConfig, {
       optimizeDeps: {
-        include: ['@base-ui/react/menu'],
+        include: ['@base-ui/react/menu', '@base-ui/react/tooltip'],
       },
       plugins: [tailwindcss()],
       resolve: {
         alias: {
           '@': fileURLToPath(new URL('../src', import.meta.url)),
         },
+        dedupe: ['react', 'react-dom'],
       },
     }),
 }

@@ -1,6 +1,6 @@
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import type { ReactNode } from 'react'
-import { useMemo } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '../../lib/utils'
 
@@ -40,14 +40,16 @@ export function KanbanView<TCard>({
   const [activeColumnId, setActiveColumnId] = useActiveColumnId(columns)
   const {
     cardDragEnabled,
+    focusCardDragId,
     getCardDragId,
+    handleCardFocusRestored,
     handleDragEnd,
     handleDragOver,
     handleDragStart,
-    reconciliationKey,
     visibleColumns,
   } = useKanbanDragAndDrop({ columns, getKey, onMoveCard })
   const { isDragging: isBoardDragging, rootRef } = useHorizontalDragScroll()
+  const boardContentRef = useRef<HTMLDivElement | null>(null)
   const stageOptions = useMemo(() => createStageOptions(columns), [columns])
   const cardsByDragId = useMemo(
     () =>
@@ -71,6 +73,23 @@ export function KanbanView<TCard>({
     sortableCards: cardDragEnabled,
   }
   const showHorizontalScrollbar = cardDragEnabled && isBoardDragging
+
+  useLayoutEffect(() => {
+    if (!focusCardDragId) return
+
+    const frame = requestAnimationFrame(() => {
+      const card = Array.from(
+        boardContentRef.current?.querySelectorAll<HTMLElement>('[data-kanban-card-drag-id]') ?? [],
+      ).find((element) => element.dataset.kanbanCardDragId === focusCardDragId)
+
+      if (!card) return
+      card.focus({ preventScroll: true })
+      card.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' })
+      handleCardFocusRestored()
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [focusCardDragId, handleCardFocusRestored])
 
   return (
     <div className="h-full min-h-0">
@@ -119,8 +138,7 @@ export function KanbanView<TCard>({
           >
             <div
               className="grid h-full min-h-full w-max auto-cols-[minmax(19rem,22rem)] grid-flow-col gap-2"
-              data-kanban-reconciliation-key={reconciliationKey}
-              key={reconciliationKey}
+              ref={boardContentRef}
             >
               {visibleColumns.map((column) => (
                 <KanbanColumn

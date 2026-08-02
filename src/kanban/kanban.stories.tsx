@@ -4,10 +4,15 @@ import {
   BellIcon,
   CalendarIcon,
   CircleDotIcon,
+  Columns3Icon,
+  ExpandIcon,
+  EyeIcon,
   FilterIcon,
+  Rows2Icon,
   Rows3Icon,
   RotateCcwIcon,
   SettingsIcon,
+  ShrinkIcon,
   SlidersHorizontalIcon,
   TagIcon,
   UserIcon,
@@ -33,12 +38,14 @@ import {
   MenuSubTrigger,
   MenuTrigger,
 } from '@/components/ui/menu'
+import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip'
 import { Toolbar as CossToolbar, ToolbarButton, ToolbarGroup } from '@/components/ui/toolbar'
 import {
   KanbanBadge,
   KanbanCard,
   KanbanCardContent,
   KanbanCardDescription,
+  type KanbanCardDisplay,
   KanbanCardFooter,
   KanbanCardHeader,
   KanbanCardTitle,
@@ -186,6 +193,152 @@ const toolbarColumns: KanbanColumnData<ExampleCard>[] = [
   },
 ]
 
+const toolbarFilterCards: ExampleCard[] = [
+  {
+    assignee: 'Ana',
+    creator: 'Marina',
+    date: 'Today',
+    id: 'record-6',
+    label: 'Map filter behavior',
+    labels: ['API', 'Docs'],
+    priority: 'Medium',
+    summary: 'Exercise multiple values in one filter and the AND rule between fields.',
+    tags: ['Filters', 'API'],
+  },
+  {
+    assignee: 'Bruno',
+    creator: 'Gabriel',
+    date: 'This week',
+    id: 'record-7',
+    label: 'Add keyboard shortcuts',
+    labels: ['A11y'],
+    priority: 'High',
+    summary: 'Keep menu actions discoverable for keyboard and assistive technology users.',
+    tags: ['A11y', 'Keyboard'],
+  },
+  {
+    assignee: 'Casey',
+    creator: 'Priya',
+    date: 'Later',
+    id: 'record-8',
+    label: 'Review empty states',
+    labels: ['QA'],
+    priority: 'Low',
+    summary: 'Make a zero-result filter understandable and recoverable.',
+    tags: ['QA', 'Empty state'],
+  },
+  {
+    assignee: 'Dana',
+    creator: 'Marina',
+    date: 'Today',
+    id: 'record-9',
+    label: 'Define layout defaults',
+    labels: ['State'],
+    priority: 'Urgent',
+    summary: 'Choose a predictable initial display for a new board.',
+    tags: ['Settings', 'Defaults'],
+  },
+  {
+    assignee: 'Ana',
+    creator: 'Gabriel',
+    date: 'This week',
+    id: 'record-10',
+    label: 'Audit column actions',
+    labels: ['Docs'],
+    priority: 'High',
+    summary: 'Document add, settings, and expansion actions for every column.',
+    tags: ['Columns', 'Actions'],
+  },
+  {
+    assignee: 'Bruno',
+    creator: 'Priya',
+    date: 'Later',
+    id: 'record-11',
+    label: 'Test compact density',
+    labels: ['API'],
+    priority: 'Medium',
+    summary: 'Compare compact and detailed cards without losing context.',
+    tags: ['Cards', 'Compact'],
+  },
+  {
+    assignee: 'Casey',
+    creator: 'Marina',
+    date: 'Today',
+    id: 'record-12',
+    label: 'Check persisted preferences',
+    labels: ['QA'],
+    priority: 'Low',
+    summary: 'Verify a consumer can restore settings after a reload.',
+    tags: ['Persistence', 'QA'],
+  },
+  {
+    assignee: 'Dana',
+    creator: 'Gabriel',
+    date: 'This week',
+    id: 'record-13',
+    label: 'Handle stale snapshots',
+    labels: ['A11y'],
+    priority: 'Urgent',
+    summary: 'Keep the optimistic order visible while a cache catches up.',
+    tags: ['Cache', 'Optimistic UI'],
+  },
+  {
+    assignee: 'Ana',
+    creator: 'Priya',
+    date: 'Later',
+    id: 'record-14',
+    label: 'Group cards by lane',
+    labels: ['State'],
+    priority: 'Medium',
+    summary: 'Prepare a reusable grouping model for future swimlane settings.',
+    tags: ['Swimlanes', 'Grouping'],
+  },
+  {
+    assignee: 'Bruno',
+    creator: 'Marina',
+    date: 'Today',
+    id: 'record-15',
+    label: 'Prepare release notes',
+    labels: ['API'],
+    priority: 'High',
+    summary: 'Describe the public surface for products integrating the provider.',
+    tags: ['Release', 'API'],
+  },
+]
+
+const toolbarFilterColumns: KanbanColumnData<ExampleCard>[] = [
+  {
+    cards: [cards[0]!, toolbarFilterCards[0]!, toolbarFilterCards[1]!],
+    count: 3,
+    id: 'backlog',
+    title: 'Backlog',
+  },
+  {
+    cards: [cards[1]!, toolbarFilterCards[2]!, toolbarFilterCards[3]!],
+    count: 3,
+    id: 'todo',
+    title: 'Todo',
+  },
+  {
+    cards: [cards[2]!, toolbarFilterCards[4]!, toolbarFilterCards[5]!],
+    count: 3,
+    id: 'in-progress',
+    title: 'In Progress',
+  },
+  {
+    cards: [cards[3]!, toolbarFilterCards[6]!, toolbarFilterCards[7]!],
+    count: 3,
+    id: 'in-review',
+    title: 'In Review',
+  },
+  {
+    cards: [cards[4]!, toolbarFilterCards[8]!, toolbarFilterCards[9]!],
+    count: 3,
+    id: 'done',
+    title: 'Done',
+  },
+]
+
 type BoardFilterKey = 'assignee' | 'creator' | 'date' | 'labels' | 'priority' | 'status'
 type BoardFilters = Record<BoardFilterKey, string[]>
 
@@ -271,12 +424,19 @@ function cloneColumns(columns: KanbanColumnData<ExampleCard>[]): KanbanColumnDat
   return columns.map((column) => ({ ...column, cards: [...column.cards] }))
 }
 
-function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
+function ExampleCardView({
+  card,
+  display = 'full',
+}: Readonly<{
+  card: ExampleCard
+  display?: KanbanCardDisplay
+}>) {
   return (
-    <KanbanCard>
+    <KanbanCard display={display}>
       <KanbanCardHeader>
         <KanbanCardTitle className="text-sm leading-normal">{card.label}</KanbanCardTitle>
         <KanbanCardDescription className="text-xs leading-5">{card.summary}</KanbanCardDescription>
+        <CompactMetadata display={display} date={card.date} tags={card.tags} />
       </KanbanCardHeader>
       <KanbanCardContent>
         <ul
@@ -313,6 +473,47 @@ function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
   )
 }
 
+function CompactMetadata({
+  date,
+  display,
+  tags,
+}: Readonly<{ date: string; display: KanbanCardDisplay; tags: readonly string[] }>) {
+  if (display !== 'compact') return null
+
+  return (
+    <div
+      className="inline-flex min-w-0 shrink items-center gap-2 text-muted-foreground text-xs"
+      data-compact-visible="true"
+      data-slot="consumer-compact-metadata"
+    >
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              aria-label={`${tags.length} ${tags.length === 1 ? 'tag' : 'tags'}`}
+              data-kanban-card-action=""
+              size="xs"
+              variant="ghost"
+            />
+          }
+        >
+          <TagIcon aria-hidden="true" />
+          <span aria-hidden="true">{tags.length}</span>
+        </TooltipTrigger>
+        <TooltipPopup>
+          <div>
+            <span className="font-medium">Tags:</span> {tags.join(', ')}
+          </div>
+        </TooltipPopup>
+      </Tooltip>
+      <span className="inline-flex min-w-0 items-center gap-1" data-slot="kanban-card-compact-date">
+        <span className="sr-only">Date: </span>
+        <span className="truncate">{date}</span>
+      </span>
+    </div>
+  )
+}
+
 type PersistenceExample = 'accept' | 'reject' | 'stale-cache'
 
 function InteractiveBoard() {
@@ -324,14 +525,10 @@ function InteractiveBoard() {
       <KanbanView
         columns={columns}
         getCardLabel={(card) => card.label}
-        getColumnActions={(column) =>
-          column.id === 'backlog'
-            ? {
-              onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
-              onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
-            }
-            : undefined
-        }
+        getColumnActions={(_column) => ({
+          onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
+          onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
+        })}
         getKey={(card) => card.id}
         mobileStageHint="Select a column to inspect its cards on small screens."
         onMoveCard={(move) => {
@@ -363,9 +560,9 @@ function OrderingAcceptanceBoard({
           getColumnActions={(column) =>
             column.id === 'backlog'
               ? {
-                onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
-                onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
-              }
+                  onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
+                  onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
+                }
               : undefined
           }
           getKey={(card) => card.id}
@@ -516,7 +713,31 @@ function FilterMenu({
   )
 }
 
-function SettingsMenu({ onReset }: Readonly<{ onReset: () => void }>) {
+function SettingsMenu({
+  display,
+  onDisplayChange,
+}: Readonly<{
+  display: KanbanCardDisplay
+  onDisplayChange: (display: KanbanCardDisplay) => void
+}>) {
+  const [columnWidth, setColumnWidth] = useState('standard')
+  const [swimlane, setSwimlane] = useState('none')
+  const [expandedColumnIds, setExpandedColumnIds] = useState(() =>
+    toolbarFilterColumns.map((column) => column.id),
+  )
+
+  const setAllColumnsExpanded = (expanded: boolean) => {
+    setExpandedColumnIds(expanded ? toolbarFilterColumns.map((column) => column.id) : [])
+  }
+
+  const toggleColumn = (columnId: string) => {
+    setExpandedColumnIds((current) =>
+      current.includes(columnId)
+        ? current.filter((currentColumnId) => currentColumnId !== columnId)
+        : [...current, columnId],
+    )
+  }
+
   return (
     <Menu>
       <MenuTrigger render={<ToolbarButton render={<Button variant="secondary" />} />}>
@@ -525,41 +746,117 @@ function SettingsMenu({ onReset }: Readonly<{ onReset: () => void }>) {
       </MenuTrigger>
       <MenuPopup align="end">
         <MenuGroup>
-          <MenuGroupLabel>Board settings</MenuGroupLabel>
+          <MenuGroupLabel>Board</MenuGroupLabel>
           <MenuItem>
             <SlidersHorizontalIcon aria-hidden="true" />
-            Board preferences
+            Details
           </MenuItem>
           <MenuItem>
             <BellIcon aria-hidden="true" />
             Notifications
           </MenuItem>
+        </MenuGroup>
+        <MenuSeparator />
+        <MenuGroup>
+          <MenuGroupLabel>Layout</MenuGroupLabel>
           <MenuSub>
             <MenuSubTrigger>
               <Rows3Icon aria-hidden="true" />
-              Card density
+              Cards
             </MenuSubTrigger>
             <MenuSubPopup>
-              <MenuRadioGroup defaultValue="comfortable">
-                <MenuRadioItem value="compact">Compact</MenuRadioItem>
-                <MenuRadioItem value="comfortable">Comfortable</MenuRadioItem>
-                <MenuRadioItem value="spacious">Spacious</MenuRadioItem>
-              </MenuRadioGroup>
+              <MenuGroup>
+                <MenuGroupLabel>Card detail</MenuGroupLabel>
+                <MenuRadioGroup
+                  onValueChange={(value) => {
+                    if (value === 'full' || value === 'compact') onDisplayChange(value)
+                  }}
+                  value={display}
+                >
+                  <MenuRadioItem closeOnClick value="full">
+                    Detailed
+                  </MenuRadioItem>
+                  <MenuRadioItem closeOnClick value="compact">
+                    Compact
+                  </MenuRadioItem>
+                </MenuRadioGroup>
+              </MenuGroup>
+            </MenuSubPopup>
+          </MenuSub>
+          <MenuSub>
+            <MenuSubTrigger>
+              <Columns3Icon aria-hidden="true" />
+              Columns
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              <MenuGroup>
+                <MenuGroupLabel>Column width</MenuGroupLabel>
+                <MenuRadioGroup onValueChange={setColumnWidth} value={columnWidth}>
+                  <MenuRadioItem value="narrow">Narrow</MenuRadioItem>
+                  <MenuRadioItem value="standard">Standard</MenuRadioItem>
+                  <MenuRadioItem value="wide">Wide</MenuRadioItem>
+                </MenuRadioGroup>
+              </MenuGroup>
+            </MenuSubPopup>
+          </MenuSub>
+          <MenuSub>
+            <MenuSubTrigger>
+              <Rows2Icon aria-hidden="true" />
+              Swimlanes
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              <MenuGroup>
+                <MenuGroupLabel>Group cards by</MenuGroupLabel>
+                <MenuRadioGroup onValueChange={setSwimlane} value={swimlane}>
+                  <MenuRadioItem value="none">None</MenuRadioItem>
+                  <MenuRadioItem value="assignee">Assignee</MenuRadioItem>
+                  <MenuRadioItem value="priority">Priority</MenuRadioItem>
+                </MenuRadioGroup>
+              </MenuGroup>
+            </MenuSubPopup>
+          </MenuSub>
+          <MenuSub>
+            <MenuSubTrigger>
+              <EyeIcon aria-hidden="true" />
+              Visibility
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              <MenuGroup>
+                <MenuGroupLabel>Column visibility</MenuGroupLabel>
+                <MenuItem closeOnClick={false} onClick={() => setAllColumnsExpanded(true)}>
+                  <ExpandIcon aria-hidden="true" />
+                  Expand all
+                </MenuItem>
+                <MenuItem closeOnClick={false} onClick={() => setAllColumnsExpanded(false)}>
+                  <ShrinkIcon aria-hidden="true" />
+                  Collapse all
+                </MenuItem>
+              </MenuGroup>
+              <MenuSeparator />
+              <MenuGroup>
+                <MenuGroupLabel>Expanded columns</MenuGroupLabel>
+                {toolbarFilterColumns.map((column) => (
+                  <MenuCheckboxItem
+                    checked={expandedColumnIds.includes(column.id)}
+                    closeOnClick={false}
+                    key={column.id}
+                    onCheckedChange={() => toggleColumn(column.id)}
+                  >
+                    {column.title}
+                  </MenuCheckboxItem>
+                ))}
+              </MenuGroup>
             </MenuSubPopup>
           </MenuSub>
         </MenuGroup>
-        <MenuSeparator />
-        <MenuItem onClick={onReset}>
-          <RotateCcwIcon aria-hidden="true" />
-          Reset filters
-        </MenuItem>
       </MenuPopup>
     </Menu>
   )
 }
 
 function ToolbarBoard() {
-  const [columns, setColumns] = useState(toolbarColumns)
+  const [columns, setColumns] = useState(toolbarFilterColumns)
+  const [display, setDisplay] = useState<KanbanCardDisplay>('full')
   const [filters, setFilters] = useState(emptyBoardFilters)
   const filteredColumns = useMemo(() => filterBoardColumns(columns, filters), [columns, filters])
   const resetFilters = () => setFilters(emptyBoardFilters)
@@ -584,7 +881,7 @@ function ToolbarBoard() {
               setFilters((currentFilters) => toggleBoardFilter(currentFilters, key, value))
             }
           />
-          <SettingsMenu onReset={resetFilters} />
+          <SettingsMenu display={display} onDisplayChange={setDisplay} />
         </ToolbarGroup>
       </CossToolbar>
 
@@ -592,13 +889,19 @@ function ToolbarBoard() {
         <KanbanView
           columns={filteredColumns}
           getCardLabel={(card) => card.label}
+          getColumnActions={(column) => ({
+            addLabel: `Adicionar item à seção ${column.title}`,
+            onAddCard: () => undefined,
+            onOpenSettings: () => undefined,
+            settingsLabel: `Configurar seção ${column.title}`,
+          })}
           getKey={(card) => card.id}
           mobileStageHint="Select a workflow stage."
           onMoveCard={(move) => {
             setColumns((current) => moveCard(current, move))
             return true
           }}
-          renderCard={(card) => <ExampleCardView card={card} />}
+          renderCard={(card) => <ExampleCardView card={card} display={display} />}
         />
       </div>
     </div>
@@ -676,11 +979,11 @@ export const BoardPresentationAcceptance: Story = {
       },
     ])
     await expect(canvas.queryByRole('button', { name: 'Restore order' })).toBeNull()
+    await expect(canvas.queryByRole('button', { name: 'Change card display' })).toBeNull()
     await expect(canvas.getByRole('button', { name: 'Configurar seção Backlog' })).toBeVisible()
     await expect(
       canvas.getByRole('button', { name: 'Adicionar item à seção Backlog' }),
     ).toBeVisible()
-
     const composedCards = Array.from(
       canvasElement.querySelectorAll<HTMLElement>('[data-slot="card"]'),
     ).filter((card) => card.getClientRects().length > 0)
@@ -691,6 +994,70 @@ export const BoardPresentationAcceptance: Story = {
         Array.from(card.children).map((section) => section.getAttribute('data-slot')),
       ).toEqual(['card-header', 'card-panel', 'card-footer'])
     }
+  },
+  render: () => <InteractiveBoard />,
+}
+
+export const CrossColumnMoveAcceptance: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const source = draggableCard(canvasElement, 'Mover card Define the public contract')
+    const target = draggableCard(canvasElement, 'Mover card Validate keyboard drag')
+    const sourceRect = source.getBoundingClientRect()
+    const targetRect = target.getBoundingClientRect()
+    const sourcePoint = {
+      clientX: sourceRect.left + sourceRect.width / 2,
+      clientY: sourceRect.top + sourceRect.height / 2,
+    }
+    const targetPoint = {
+      clientX: targetRect.left + targetRect.width / 2,
+      clientY: targetRect.top + targetRect.height / 2,
+    }
+
+    fireEvent.pointerDown(source, {
+      ...sourcePoint,
+      button: 0,
+      buttons: 1,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+    await nextAnimationFrame()
+    fireEvent.pointerMove(source, {
+      ...sourcePoint,
+      buttons: 1,
+      clientY: sourcePoint.clientY + 12,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+    await waitFor(() => expect(source).toHaveAttribute('aria-grabbed', 'true'))
+    fireEvent.pointerMove(target, {
+      ...targetPoint,
+      buttons: 1,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+    await nextAnimationFrame()
+    fireEvent.pointerUp(target, {
+      ...targetPoint,
+      button: 0,
+      buttons: 0,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+
+    await waitFor(() =>
+      expect(visibleBoardColumns(canvasElement).slice(0, 2)).toEqual([
+        { cards: [], title: 'Backlog' },
+        {
+          cards: ['Mover card Define the public contract', 'Mover card Validate keyboard drag'],
+          title: 'Todo',
+        },
+      ]),
+    )
   },
   render: () => <InteractiveBoard />,
 }
@@ -890,6 +1257,14 @@ export const ReadOnly: Story = {
 }
 
 export const Toolbar: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Teste manual: use Filter para combinar Status, Assignee, Creator, Priority, Labels e Date; selecione mais de uma opção no mesmo submenu para validar OR, combine submenus para validar AND e use Clear filters para restaurar os 15 cards. Em Settings, confira Detailed/Compact, Column width, Swimlanes e Visibility. A opção Expanded em Visibility é um mock visual do menu e não altera as colunas nesta story.',
+      },
+    },
+  },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const documentBody = within(canvasElement.ownerDocument.body)
@@ -938,18 +1313,126 @@ export const Toolbar: Story = {
     await userEvent.keyboard('{Escape}{Escape}')
     await userEvent.click(settingsButton)
 
-    await expect(await documentBody.findByText('Board settings')).toBeVisible()
-    for (const setting of ['Board preferences', 'Notifications', 'Card density']) {
+    await expect(await documentBody.findByText('Board')).toBeVisible()
+    await expect(await documentBody.findByText('Layout')).toBeVisible()
+    for (const setting of [
+      'Details',
+      'Notifications',
+      'Cards',
+      'Columns',
+      'Swimlanes',
+      'Visibility',
+    ]) {
       const menuItem = documentBody.getByRole('menuitem', { name: setting })
 
       await expect(menuItem).toBeVisible()
       await expect(menuItem.querySelector('svg')).not.toBeNull()
     }
 
-    await userEvent.click(documentBody.getByRole('menuitem', { name: 'Reset filters' }))
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Columns' }))
+    await expect(await documentBody.findByText('Column width')).toBeVisible()
+    for (const width of ['Narrow', 'Standard', 'Wide']) {
+      await expect(documentBody.getByRole('menuitemradio', { name: width })).toBeVisible()
+    }
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(documentBody.queryByText('Column width')).toBeNull())
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Swimlanes' }))
+    await expect(await documentBody.findByText('Group cards by')).toBeVisible()
+    for (const grouping of ['None', 'Assignee', 'Priority']) {
+      await expect(documentBody.getByRole('menuitemradio', { name: grouping })).toBeVisible()
+    }
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(documentBody.queryByText('Group cards by')).toBeNull())
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Visibility' }))
+    await expect(await documentBody.findByText('Column visibility')).toBeVisible()
+    await expect(documentBody.getByRole('menuitem', { name: 'Expand all' })).toBeVisible()
+    await expect(documentBody.getByRole('menuitem', { name: 'Collapse all' })).toBeVisible()
+
+    await userEvent.click(documentBody.getByRole('menuitem', { name: 'Collapse all' }))
+    for (const column of ['Backlog', 'Todo', 'In Progress', 'In Review', 'Done']) {
+      await expect(documentBody.getByRole('menuitemcheckbox', { name: column })).toHaveAttribute(
+        'aria-checked',
+        'false',
+      )
+    }
+    await expect(
+      canvas.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent),
+    ).toEqual(columnTitles)
+    await expect(visibleCardLabels(canvasElement)).toEqual(['Mover card Validate keyboard drag'])
+
+    await userEvent.click(documentBody.getByRole('menuitemcheckbox', { name: 'Backlog' }))
+    await expect(documentBody.getByRole('menuitemcheckbox', { name: 'Backlog' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+    await userEvent.click(documentBody.getByRole('menuitem', { name: 'Expand all' }))
+    await expect(
+      canvas.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent),
+    ).toEqual(columnTitles)
+    await expect(visibleCardLabels(canvasElement)).toEqual(['Mover card Validate keyboard drag'])
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(documentBody.queryByText('Column visibility')).toBeNull())
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Cards' }))
+    await expect(await documentBody.findByText('Card detail')).toBeVisible()
+    await userEvent.click(await documentBody.findByRole('menuitemradio', { name: 'Compact' }))
+
+    for (const card of canvas.getAllByRole('article')) {
+      await expect(card).toHaveAttribute('data-display', 'compact')
+    }
+    await expect(canvas.queryByRole('button', { name: 'Change card display' })).toBeNull()
+    await expect(canvas.queryByText(cards[1]!.summary)).not.toBeVisible()
+
+    await waitFor(() => expect(settingsButton).not.toHaveAttribute('data-popup-open'))
+    await nextAnimationFrame()
+    await userEvent.click(settingsButton)
+    await userEvent.hover(await documentBody.findByRole('menuitem', { name: 'Cards' }))
+    const detailedItem = await documentBody.findByRole('menuitemradio', { name: 'Detailed' })
+    await expect(detailedItem.getBoundingClientRect().height).toBeLessThanOrEqual(32)
+    await userEvent.click(detailedItem)
+
+    for (const card of canvas.getAllByRole('article')) {
+      await expect(card).toHaveAttribute('data-display', 'full')
+    }
+
+    await waitFor(() => expect(settingsButton).not.toHaveAttribute('data-popup-open'))
+    await nextAnimationFrame()
+    await userEvent.click(filterButton)
+    await userEvent.click(await documentBody.findByRole('menuitem', { name: 'Clear filters' }))
 
     await expect(filterButton).toHaveTextContent('Filter')
-    await expect(visibleCardLabels(canvasElement)).toHaveLength(5)
+    await expect(visibleCardLabels(canvasElement)).toHaveLength(15)
+  },
+  render: () => <ToolbarBoard />,
+}
+
+export const FilterCombinationAcceptance: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const documentBody = within(canvasElement.ownerDocument.body)
+    const filterButton = canvas.getByRole('button', { name: 'Filter' })
+
+    await userEvent.click(filterButton)
+    await userEvent.hover(await documentBody.findByRole('menuitem', { name: 'Status' }))
+    await userEvent.click(await documentBody.findByRole('menuitemcheckbox', { name: 'Backlog' }))
+    await userEvent.click(await documentBody.findByRole('menuitemcheckbox', { name: 'Todo' }))
+
+    await expect(filterButton).toHaveTextContent('Filter (2)')
+    await expect(visibleCardLabels(canvasElement)).toHaveLength(6)
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Assignee' }))
+    await userEvent.click(await documentBody.findByRole('menuitemcheckbox', { name: 'Dana' }))
+    await expect(visibleCardLabels(canvasElement)).toEqual(['Mover card Define layout defaults'])
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Creator' }))
+    await userEvent.click(await documentBody.findByRole('menuitemcheckbox', { name: 'Gabriel' }))
+    await expect(visibleCardLabels(canvasElement)).toHaveLength(0)
+
+    await userEvent.click(documentBody.getByRole('menuitem', { name: 'Clear filters' }))
+    await expect(visibleCardLabels(canvasElement)).toHaveLength(15)
   },
   render: () => <ToolbarBoard />,
 }

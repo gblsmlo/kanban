@@ -1,15 +1,15 @@
 import { pointerIntersection } from '@dnd-kit/collision'
 import { KeyboardSensor, PointerSensor } from '@dnd-kit/dom'
 import { useSortable } from '@dnd-kit/react/sortable'
-import type { ReactNode } from 'react'
+import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 import { useCallback, useLayoutEffect, useRef } from 'react'
 import { cn } from '../../lib/utils'
 
 const ACTIONABLE_DESCENDANT_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  '[role="button"]:not([aria-disabled="true"])',
-  '[role="link"]:not([aria-disabled="true"])',
+  'a[href]:not([data-kanban-card-action])',
+  'button:not([disabled]):not([data-kanban-card-action])',
+  '[role="button"]:not([aria-disabled="true"]):not([data-kanban-card-action])',
+  '[role="link"]:not([aria-disabled="true"]):not([data-kanban-card-action])',
 ].join(',')
 
 const KANBAN_CARD_SENSORS = [
@@ -70,6 +70,13 @@ export function SortableKanbanCard({
     return () => handleRef(null)
   })
 
+  const handlePointerDownCapture = (event: ReactPointerEvent<HTMLElement>) => {
+    const target = event.target
+    if (target instanceof Element && target.closest('[data-kanban-card-action]')) {
+      event.stopPropagation()
+    }
+  }
+
   return (
     <section
       aria-label={dragLabel}
@@ -79,7 +86,9 @@ export function SortableKanbanCard({
         isDragSource && 'opacity-0',
       )}
       data-kanban-card-container=""
+      data-kanban-card-drag-id={id}
       data-kanban-card-draggable=""
+      onPointerDownCapture={handlePointerDownCapture}
       ref={setWrapperRef}
     >
       {children}

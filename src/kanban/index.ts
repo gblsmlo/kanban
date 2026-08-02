@@ -4,6 +4,7 @@ export type {
   KanbanCardActionProps,
   KanbanCardContentProps,
   KanbanCardDescriptionProps,
+  KanbanCardDisplay,
   KanbanCardFooterProps,
   KanbanCardHeaderProps,
   KanbanCardProps,

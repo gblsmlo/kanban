@@ -18,7 +18,9 @@ Object.assign(window, { PointerEvent: TestPointerEvent })
 Object.assign(globalThis, { PointerEvent: TestPointerEvent })
 
 const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react')
-const { KanbanCard, KanbanCardContent } = await import('./kanban-card')
+const { KanbanCard, KanbanCardContent, KanbanCardHeader, KanbanCardTitle } = await import(
+  './kanban-card'
+)
 const { KanbanColumn } = await import('./kanban-column')
 const { KanbanStageSelector } = await import('./kanban-stage-selector')
 const { KanbanView } = await import('./kanban-view')
@@ -230,6 +232,68 @@ describe('Kanban accessibility', () => {
     expect(
       screen.getByRole('textbox', { name: 'Título do card' }).hasAttribute('aria-describedby'),
     ).toBeFalse()
+  })
+
+  test('keeps compact tag metadata separate from the keyboard drag activator', async () => {
+    const column = {
+      cards: [{ id: 'card-1' }],
+      count: 1,
+      id: 'backlog',
+      title: 'Backlog',
+    }
+    let dragStarts = 0
+    const onTagClick = mock(() => undefined)
+
+    render(
+      <DragDropProvider
+        onDragStart={() => {
+          dragStarts += 1
+        }}
+      >
+        <KanbanColumn
+          column={column}
+          getCardDragId={(card) => `kanban-card:${card.id}`}
+          getCardLabel={(card) => card.id}
+          getKey={(card) => card.id}
+          renderCard={() => (
+            <KanbanCard display="compact">
+              <KanbanCardHeader>
+                <KanbanCardTitle>Card 1</KanbanCardTitle>
+                <button
+                  aria-label="1 tag"
+                  data-kanban-card-action=""
+                  onClick={onTagClick}
+                  type="button"
+                >
+                  1
+                </button>
+              </KanbanCardHeader>
+            </KanbanCard>
+          )}
+          sortableCards
+        />
+      </DragDropProvider>,
+    )
+    await act(async () => undefined)
+
+    const draggable = screen.getByRole('region', { name: 'Mover card card-1' })
+    const tagMetadata = screen.getByRole('button', { name: '1 tag' })
+
+    await waitFor(() => expect(draggable.getAttribute('tabindex')).toBe('0'))
+    expect(tagMetadata.hasAttribute('aria-roledescription')).toBeFalse()
+    expect(tagMetadata.hasAttribute('data-kanban-card-action')).toBeTrue()
+    expect(dragStarts).toBe(0)
+
+    fireEvent.pointerDown(tagMetadata, { button: 0, isPrimary: true, pointerId: 1 })
+    await act(async () => undefined)
+    expect(dragStarts).toBe(0)
+    fireEvent.click(tagMetadata)
+    expect(onTagClick).toHaveBeenCalledTimes(1)
+
+    draggable.focus()
+    fireEvent.keyDown(draggable, { code: 'Space', key: ' ' })
+    await act(async () => undefined)
+    expect(dragStarts).toBe(1)
   })
 
   test('shows the board scrollbar only during an active horizontal drag', async () => {

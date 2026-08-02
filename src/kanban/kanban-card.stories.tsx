@@ -1,11 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { TagIcon } from 'lucide-react'
 import { expect, waitFor, within } from 'storybook/test'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip'
 
 import {
   KanbanBadge,
   KanbanCard,
   KanbanCardContent,
   KanbanCardDescription,
+  type KanbanCardDisplay,
   KanbanCardFooter,
   KanbanCardHeader,
   KanbanCardSkeleton,
@@ -71,12 +75,19 @@ const cards: ExampleCard[] = [
   },
 ]
 
-function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
+function ExampleCardView({
+  card,
+  display = 'full',
+}: Readonly<{
+  card: ExampleCard
+  display?: KanbanCardDisplay
+}>) {
   return (
-    <KanbanCard>
+    <KanbanCard display={display}>
       <KanbanCardHeader>
         <KanbanCardTitle className="text-sm leading-normal">{card.label}</KanbanCardTitle>
         <KanbanCardDescription className="text-xs leading-5">{card.summary}</KanbanCardDescription>
+        <CompactMetadata display={display} date={card.date} tags={card.tags} />
       </KanbanCardHeader>
       <KanbanCardContent>
         <ul
@@ -106,8 +117,53 @@ function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
   )
 }
 
-function renderCard(card: ExampleCard) {
-  return <div className="w-full max-w-sm px-4 py-6">{ExampleCardView({ card })}</div>
+function CompactMetadata({
+  date,
+  display,
+  tags,
+}: Readonly<{ date: string; display: KanbanCardDisplay; tags: readonly string[] }>) {
+  if (display !== 'compact') return null
+
+  return (
+    <div
+      className="inline-flex min-w-0 shrink items-center gap-2 text-muted-foreground text-xs"
+      data-compact-visible="true"
+      data-slot="consumer-compact-metadata"
+    >
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              aria-label={`${tags.length} ${tags.length === 1 ? 'tag' : 'tags'}`}
+              data-kanban-card-action=""
+              size="xs"
+              variant="ghost"
+            />
+          }
+        >
+          <TagIcon aria-hidden="true" />
+          <span aria-hidden="true">{tags.length}</span>
+        </TooltipTrigger>
+        <TooltipPopup>
+          <div>
+            <span className="font-medium">Tags:</span> {tags.join(', ')}
+          </div>
+        </TooltipPopup>
+      </Tooltip>
+      <span className="inline-flex min-w-0 items-center gap-1" data-slot="kanban-card-compact-date">
+        <span className="sr-only">Date: </span>
+        <span className="truncate">{date}</span>
+      </span>
+    </div>
+  )
+}
+
+function renderCard(card: ExampleCard, display: KanbanCardDisplay = 'full') {
+  return (
+    <div className="w-full max-w-sm px-4 py-6">
+      <ExampleCardView card={card} display={display} />
+    </div>
+  )
 }
 
 const meta = {
@@ -119,7 +175,7 @@ export default meta
 type Story = StoryObj
 
 function expectTaglessLayout(canvasElement: HTMLElement, expectedTagCount: number) {
-  return async function () {
+  return async () => {
     const card = within(canvasElement).getByRole('article')
     const tags = within(card).getAllByRole('listitem')
 
@@ -179,4 +235,26 @@ export const Loading: Story = {
       <KanbanCardSkeleton label="Carregando card de exemplo" />
     </div>
   ),
+}
+
+export const Full: Story = {
+  render: () => renderCard(cards[3]!, 'full'),
+}
+
+export const Compact: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const metadata = canvas.getByLabelText('4 tags')
+    const card = canvas.getByRole('article')
+    const date = card.querySelector('[data-slot="kanban-card-compact-date"]')
+
+    if (!date) throw new Error('Visible compact date not found')
+
+    await expect(card).toHaveAttribute('data-display', 'compact')
+    await expect(canvas.getByText(cards[3]!.summary)).not.toBeVisible()
+    await expect(metadata).toBeVisible()
+    await expect(date).toBeVisible()
+    await expect(date).toHaveTextContent('This week')
+  },
+  render: () => renderCard(cards[3]!, 'compact'),
 }
