@@ -134,6 +134,21 @@ const initialColumns: KanbanColumnData<ExampleCard>[] = [
   },
 ]
 
+const orderingColumns: KanbanColumnData<ExampleCard>[] = [
+  {
+    cards,
+    count: cards.length,
+    id: 'backlog',
+    title: 'Backlog',
+  },
+  {
+    cards: [],
+    count: 0,
+    id: 'done',
+    title: 'Done',
+  },
+]
+
 const toolbarColumns: KanbanColumnData<ExampleCard>[] = [
   {
     cards: [cards[0]!],
@@ -253,7 +268,14 @@ function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
     <KanbanCard>
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
-          <p className="font-medium text-sm">{card.label}</p>
+          <Button
+            aria-label={`Open ${card.label}`}
+            className="h-auto min-w-0 justify-start border-0 p-0 text-left font-medium text-sm"
+            onClick={() => undefined}
+            variant="link"
+          >
+            {card.label}
+          </Button>
           <KanbanBadge>{card.tag}</KanbanBadge>
         </div>
         <p className="text-muted-foreground text-xs leading-5">{card.summary}</p>
@@ -263,21 +285,29 @@ function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
 }
 
 function InteractiveBoard() {
-  const [columns, setColumns] = useState(initialColumns)
+  const [columns, setColumns] = useState(orderingColumns)
 
   return (
-    <div className="h-[560px] min-h-0 p-4">
-      <KanbanView
-        columns={columns}
-        getCardLabel={(card) => card.label}
-        getKey={(card) => card.id}
-        mobileStageHint="Select a column to inspect its cards on small screens."
-        onMoveCard={(move) => {
-          setColumns((current) => moveCard(current, move))
-          return true
-        }}
-        renderCard={(card) => <ExampleCardView card={card} />}
-      />
+    <div className="grid h-[560px] min-h-0 grid-rows-[auto_1fr] gap-2 p-4">
+      <div className="flex justify-end">
+        <Button onClick={() => setColumns(orderingColumns)} size="sm" variant="secondary">
+          <RotateCcwIcon aria-hidden="true" />
+          Restore order
+        </Button>
+      </div>
+      <div className="min-h-0">
+        <KanbanView
+          columns={columns}
+          getCardLabel={(card) => card.label}
+          getKey={(card) => card.id}
+          mobileStageHint="Select a column to inspect its cards on small screens."
+          onMoveCard={(move) => {
+            setColumns((current) => moveCard(current, move))
+            return true
+          }}
+          renderCard={(card) => <ExampleCardView card={card} />}
+        />
+      </div>
     </div>
   )
 }
@@ -504,10 +534,36 @@ type CardStory = StoryObj<{ loading?: boolean }>
 
 export const Board: Story = {
   play: async ({ canvasElement }) => {
-    await expect(visibleCardLabels(canvasElement).slice(0, 3)).toEqual([
+    const canvas = within(canvasElement)
+    await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual([
       'Mover card Define the public contract',
       'Mover card Validate keyboard drag',
       'Mover card Document composition',
+      'Mover card Persist card priority',
+      'Mover card Review release evidence',
+    ])
+
+    const thirdCard = canvas.getByRole('button', { name: 'Open Document composition' })
+    thirdCard.focus()
+    await expect(thirdCard).toHaveFocus()
+    await userEvent.keyboard('[Space]')
+    await userEvent.keyboard('[ArrowUp]')
+    await userEvent.keyboard('[Space]')
+    await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual([
+      'Mover card Define the public contract',
+      'Mover card Document composition',
+      'Mover card Validate keyboard drag',
+      'Mover card Persist card priority',
+      'Mover card Review release evidence',
+    ])
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Restore order' }))
+    await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual([
+      'Mover card Define the public contract',
+      'Mover card Validate keyboard drag',
+      'Mover card Document composition',
+      'Mover card Persist card priority',
+      'Mover card Review release evidence',
     ])
   },
   render: () => <InteractiveBoard />,

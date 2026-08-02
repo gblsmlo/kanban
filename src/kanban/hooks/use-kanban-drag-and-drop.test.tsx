@@ -149,6 +149,35 @@ describe('useKanbanDragAndDrop', () => {
     expect(result.current.visibleColumns).toBe(secondCardFirstColumns)
   })
 
+  test('persists a downward reorder using the final native sortable index', () => {
+    const onMoveCard = mock(() => true)
+    const events = createDragEvents({
+      currentIndex: 2,
+      initialIndex: 0,
+      sourceId: createCardDragId('card-1'),
+    })
+    const { result } = renderHook(() =>
+      useKanbanDragAndDrop({
+        columns: initialColumns,
+        getKey: (card: CardFixture) => card.id,
+        onMoveCard,
+      }),
+    )
+
+    act(() => result.current.handleDragStart(events.start))
+    act(() => result.current.handleDragEnd(events.end))
+
+    expect(onMoveCard).toHaveBeenCalledWith({
+      card: { id: 'card-1' },
+      cardId: 'card-1',
+      sourceColumnId: 'backlog',
+      sourceIndex: 0,
+      targetColumnId: 'backlog',
+      targetIndex: 2,
+    })
+    expect(ids(result.current.visibleColumns)).toEqual(['card-2', 'card-3', 'card-1'])
+  })
+
   test('does not create a React preview when the native sortable plugin owns drag-over', () => {
     const events = createDragEvents({
       currentIndex: 0,

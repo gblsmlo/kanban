@@ -121,6 +121,20 @@ describe('kanban dnd-kit adapter', () => {
     expect(cardIds(projected)).toEqual(['card-1', 'card-3', 'card-2', 'card-4', 'card-5'])
   })
 
+  test('moves card 1 down after card 3', () => {
+    const projected = projectKanbanColumns(
+      fiveCardColumns,
+      sortableEvent({
+        currentIndex: 2,
+        initialIndex: 0,
+        sourceId: createCardDragId('card-1'),
+      }),
+      getCardDragId,
+    )
+
+    expect(cardIds(projected)).toEqual(['card-2', 'card-3', 'card-1', 'card-4', 'card-5'])
+  })
+
   test('keeps 1,2,3,4,5 when card 3 remains after card 2', () => {
     const projected = projectKanbanColumns(
       fiveCardColumns,

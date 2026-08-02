@@ -1,5 +1,7 @@
 # Reordenar cards dentro da mesma seção
 
+**Status:** implementado, com ordenação ascendente/descendente, reconciliação otimista e `Board` restaurável.
+
 ## Contexto
 
 Cards podem mudar de prioridade dentro de uma seção. Por exemplo, um card na
