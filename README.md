@@ -17,6 +17,7 @@ remote state, mutations, navigation, and persistence.
 - read-only mode when `onMoveCard` is omitted
 - responsive desktop board and mobile stage selector
 - horizontal desktop scrolling by clicking, holding, and dragging the board
+- horizontal scrollbar visible only while that board-drag gesture is active
 - minimal drag motion with DnD Kit DragOverlay, feedback, and accessibility plugins
 - COSS-first visual primitives with no direct Base UI usage in the Kanban pattern
 
@@ -116,14 +117,26 @@ type RecordItem = {
 export function Board({
   columns,
   moveRecord,
+  openCreateForm,
+  openColumnSettings,
 }: {
   columns: KanbanColumnData<RecordItem>[];
   moveRecord: (move: KanbanCardMove<RecordItem>) => boolean | Promise<boolean>;
+  openCreateForm: (columnId: string) => void;
+  openColumnSettings: (columnId: string) => void;
 }) {
   return (
     <KanbanView
       columns={columns}
       getCardLabel={(record) => record.title}
+      getColumnActions={(column) =>
+        column.id === "backlog"
+          ? {
+              onAddCard: (columnId) => openCreateForm(columnId),
+              onOpenSettings: (columnId) => openColumnSettings(columnId),
+            }
+          : undefined
+      }
       getKey={(record) => record.id}
       onMoveCard={moveRecord}
       renderCard={(record) => (
@@ -135,6 +148,13 @@ export function Board({
   );
 }
 ```
+
+`getColumnActions` enables the settings and add controls independently for each
+column. The package renders accessible icon buttons and reports the logical
+column id; the consumer owns permissions, menu or form content, mutations, and
+persistence. Omit it, return `undefined`, or omit either callback to keep that
+action out of the column header. Use `settingsLabel` and `addLabel` when the
+default Portuguese accessible labels do not match the product locale.
 
 Omit `onMoveCard` to render a read-only board. Returning or resolving `false`
 rejects the interaction and restores the previous view. A rejected optimistic
@@ -177,6 +197,18 @@ The skeleton exposes `role="status"` and `aria-busy="true"`. Its `label` is
 announced by assistive technology while its visual placeholders remain
 decorative. Its visual primitive is the COSS `ui/skeleton`; the Kanban package
 only composes its card-specific geometry and loading semantics.
+
+### Long consumer content
+
+Kanban columns, sortable wrappers, and cards clamp their intrinsic width so a
+long unbroken value cannot resize a column or the board. The sortable wrapper
+does not clip overflow, keeping tooltips, menus, focus halos, and shadows under
+consumer control. The card clips visual overflow as a final layout safeguard,
+which the consumer can override when needed. The consumer still owns how a tag
+is presented and made fully available—for example, combine `max-w-full`,
+`truncate`, and a `title` or tooltip containing the complete label. The `Card`
+story demonstrates that strategy with a long tag; wrapping is equally valid
+when it better matches the product.
 
 For sortable cards with an interactive action, the first button or link is also
 the keyboard drag activator. Press `Space` to drag or `Enter` to keep the

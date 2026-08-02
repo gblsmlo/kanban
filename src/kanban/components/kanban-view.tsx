@@ -2,11 +2,17 @@ import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { cn } from '../../lib/utils'
 
 import { useActiveColumnId } from '../hooks/use-active-column-id'
 import { useHorizontalDragScroll } from '../hooks/use-horizontal-drag-scroll'
 import { useKanbanDragAndDrop } from '../hooks/use-kanban-drag-and-drop'
-import type { KanbanCardMove, KanbanColumnData, KanbanStageOption } from '../types'
+import type {
+  KanbanCardMove,
+  KanbanColumnActions,
+  KanbanColumnData,
+  KanbanStageOption,
+} from '../types'
 import { KanbanColumn } from './kanban-column'
 import { KanbanStageSelector } from './kanban-stage-selector'
 
@@ -15,6 +21,7 @@ export interface KanbanViewProps<TCard = unknown> {
   renderCard: (card: TCard) => ReactNode
   getKey: (card: TCard) => string | number
   getCardLabel?: (card: TCard) => string
+  getColumnActions?: (column: KanbanColumnData<TCard>) => KanbanColumnActions | undefined
   emptyColumnLabel?: string
   mobileStageHint?: string
   onMoveCard?: (move: KanbanCardMove<TCard>) => boolean | Promise<boolean>
@@ -25,6 +32,7 @@ export function KanbanView<TCard>({
   renderCard,
   getKey,
   getCardLabel,
+  getColumnActions,
   emptyColumnLabel,
   mobileStageHint,
   onMoveCard,
@@ -62,6 +70,7 @@ export function KanbanView<TCard>({
     renderCard,
     sortableCards: cardDragEnabled,
   }
+  const showHorizontalScrollbar = cardDragEnabled && isBoardDragging
 
   return (
     <div className="h-full min-h-0">
@@ -80,21 +89,29 @@ export function KanbanView<TCard>({
 
           <div className="grid min-h-0 flex-1 gap-2 md:hidden">
             {activeColumn ? (
-              <KanbanColumn column={activeColumn} {...columnProps} sortableCards={false} />
+              <KanbanColumn
+                actions={getColumnActions?.(activeColumn)}
+                column={activeColumn}
+                {...columnProps}
+                sortableCards={false}
+              />
             ) : null}
           </div>
 
           <ScrollArea
-            className={
+            className={cn(
+              'hidden min-h-0 flex-1 md:block',
+              '[&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!delay-0',
+              showHorizontalScrollbar
+                ? '[&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!opacity-100'
+                : '[&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!pointer-events-none [&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!opacity-0',
               cardDragEnabled
-                ? `hidden min-h-0 flex-1 md:block [&_[data-slot=scroll-area-viewport]]:select-none ${
-                    isBoardDragging
-                      ? '[&_[data-slot=scroll-area-viewport]]:cursor-grabbing'
-                      : '[&_[data-slot=scroll-area-viewport]]:cursor-grab'
-                  }`
-                : 'hidden min-h-0 flex-1 md:block [&_[data-slot=scroll-area-viewport]]:cursor-default'
-            }
+                ? '[&_[data-slot=scroll-area-viewport]]:cursor-grab [&_[data-slot=scroll-area-viewport]]:select-none'
+                : '[&_[data-slot=scroll-area-viewport]]:cursor-default',
+              showHorizontalScrollbar && '[&_[data-slot=scroll-area-viewport]]:cursor-grabbing',
+            )}
             data-kanban-board-scroll-area=""
+            data-kanban-horizontal-scrollbar={showHorizontalScrollbar ? 'visible' : 'hidden'}
             fill
             ref={cardDragEnabled ? rootRef : undefined}
             scrollbarGutter
@@ -106,7 +123,12 @@ export function KanbanView<TCard>({
               key={reconciliationKey}
             >
               {visibleColumns.map((column) => (
-                <KanbanColumn column={column} key={column.id} {...columnProps} />
+                <KanbanColumn
+                  actions={getColumnActions?.(column)}
+                  column={column}
+                  key={column.id}
+                  {...columnProps}
+                />
               ))}
             </div>
           </ScrollArea>

@@ -336,6 +336,40 @@ describe('useKanbanDragAndDrop', () => {
     expect(result.current.reconciliationKey).toBeGreaterThanOrEqual(1)
   })
 
+  test('rolls back when the persistence promise rejects with an error', async () => {
+    let rejectPersistence: ((reason: Error) => void) | undefined
+    const persistence = new Promise<boolean>((_resolve, reject) => {
+      rejectPersistence = reject
+    })
+    const events = createDragEvents({
+      currentIndex: 0,
+      initialIndex: 1,
+      sourceId: createCardDragId('card-2'),
+    })
+    const { result } = renderHook(() =>
+      useKanbanDragAndDrop({
+        columns: initialColumns,
+        getKey: (card: CardFixture) => card.id,
+        onMoveCard: () => persistence,
+      }),
+    )
+
+    act(() => result.current.handleDragStart(events.start))
+    act(() => result.current.handleDragEnd(events.end))
+
+    expect(events.resume).toHaveBeenCalledTimes(1)
+    expect(ids(result.current.visibleColumns)).toEqual(['card-2', 'card-1', 'card-3'])
+
+    await act(async () => {
+      rejectPersistence?.(new Error('network unavailable'))
+      await persistence.catch(() => undefined)
+    })
+
+    expect(events.abort).not.toHaveBeenCalled()
+    expect(ids(result.current.visibleColumns)).toEqual(['card-1', 'card-2', 'card-3'])
+    expect(result.current.reconciliationKey).toBeGreaterThanOrEqual(1)
+  })
+
   test('does not suspend or persist an unchanged position', () => {
     const onMoveCard = mock(() => true)
     const events = createDragEvents({

@@ -65,7 +65,7 @@ const cards: ExampleCard[] = [
     labels: ['API'],
     priority: 'High',
     summary: 'Describe the data and callbacks owned by the consumer.',
-    tag: 'API',
+    tag: 'API contract requiring backwards-compatible migration planning',
   },
   {
     assignee: 'Bruno',
@@ -273,7 +273,17 @@ function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <p className="min-w-0 font-medium text-sm">{card.label}</p>
-          <KanbanBadge>{card.tag}</KanbanBadge>
+          <div
+            className="min-w-0 max-w-[50%]"
+            data-long-tag={card.tag.length > 20 ? '' : undefined}
+            title={card.tag}
+          >
+            <KanbanBadge className="max-w-full overflow-hidden">
+              <span className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                {card.tag}
+              </span>
+            </KanbanBadge>
+          </div>
         </div>
         <p className="text-muted-foreground text-xs leading-5">{card.summary}</p>
       </div>
@@ -289,6 +299,7 @@ function InteractiveBoard({
 }: Readonly<{ persistence?: PersistenceExample; showRestore?: boolean }>) {
   const [columns, setColumns] = useState(orderingColumns)
   const [persistenceStatus, setPersistenceStatus] = useState('idle')
+  const [columnAction, setColumnAction] = useState('Nenhuma ação executada')
 
   const restoreOrder = () => {
     setColumns(cloneColumns(orderingColumns))
@@ -296,7 +307,10 @@ function InteractiveBoard({
   }
 
   return (
-    <div className="grid h-[560px] min-h-0 grid-rows-[auto_1fr] gap-2 p-4">
+    <div
+      className="grid h-[560px] min-h-0 min-w-0 grid-rows-[auto_1fr] gap-2 p-4"
+      style={{ width: 480 }}
+    >
       {showRestore ? (
         <div className="flex justify-end">
           <Button onClick={restoreOrder} size="sm" variant="secondary">
@@ -309,10 +323,18 @@ function InteractiveBoard({
           {persistenceStatus}
         </output>
       )}
-      <div className="min-h-0">
+      <div className="min-h-0 min-w-0">
         <KanbanView
           columns={columns}
           getCardLabel={(card) => card.label}
+          getColumnActions={(column) =>
+            column.id === 'backlog'
+              ? {
+                  onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
+                  onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
+                }
+              : undefined
+          }
           getKey={(card) => card.id}
           mobileStageHint="Select a column to inspect its cards on small screens."
           onMoveCard={(move) => {
@@ -338,6 +360,9 @@ function InteractiveBoard({
           renderCard={(card) => <ExampleCardView card={card} />}
         />
       </div>
+      <output className="sr-only" data-column-action="">
+        {columnAction}
+      </output>
     </div>
   )
 }
@@ -607,6 +632,14 @@ async function moveThirdCardUpWithKeyboard(canvasElement: HTMLElement) {
 export const PointerOrderingAcceptance: Story = {
   tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const scrollArea = canvasElement.querySelector<HTMLElement>('[data-kanban-board-scroll-area]')
+    const viewport = scrollArea?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]')
+    const longTag = canvasElement.querySelector<HTMLElement>('[data-long-tag]')!
+    const card = longTag.closest<HTMLElement>('[data-slot="card"]')!
+    const column = longTag.closest<HTMLElement>('section[aria-labelledby]')!
+    const settings = canvas.getAllByRole('button', { name: 'Configurar seção Backlog' })[0]!
+    const add = canvas.getAllByRole('button', { name: 'Adicionar item à seção Backlog' })[0]!
     const thirdCard = draggableCard(canvasElement, 'Mover card Document composition')
     const secondCard = draggableCard(canvasElement, 'Mover card Validate keyboard drag')
     const sourceRect = thirdCard.getBoundingClientRect()
@@ -621,6 +654,41 @@ export const PointerOrderingAcceptance: Story = {
     }
 
     await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual(initialOrderingLabels)
+    await expect(scrollArea?.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
+    await expect(viewport).not.toBeNull()
+    await waitFor(() =>
+      expect(
+        scrollArea?.querySelector(
+          '[data-orientation="horizontal"][data-slot="scroll-area-scrollbar"]',
+        ),
+      ).not.toBeNull(),
+    )
+    const horizontalScrollbar = scrollArea!.querySelector<HTMLElement>(
+      '[data-orientation="horizontal"][data-slot="scroll-area-scrollbar"]',
+    )!
+    await userEvent.hover(viewport!)
+    await expect(scrollArea?.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
+    await expect(window.getComputedStyle(horizontalScrollbar!).opacity).toBe('0')
+    await expect(window.getComputedStyle(horizontalScrollbar!).transitionDelay).toBe('0s')
+    await expect(longTag.title).toBe(cards[0]!.tag)
+    await expect(card.getBoundingClientRect().width).toBeLessThanOrEqual(
+      column.getBoundingClientRect().width,
+    )
+    await expect(longTag.getBoundingClientRect().width).toBeLessThanOrEqual(
+      card.getBoundingClientRect().width,
+    )
+    await expect(canvas.queryByRole('button', { name: 'Configurar seção Done' })).toBeNull()
+    settings.focus()
+    await expect(settings).toHaveFocus()
+    await userEvent.keyboard('{Enter}')
+    await expect(canvasElement.querySelector('[data-column-action]')).toHaveTextContent(
+      'Configurar backlog',
+    )
+    add.focus()
+    await userEvent.keyboard('{Enter}')
+    await expect(canvasElement.querySelector('[data-column-action]')).toHaveTextContent(
+      'Adicionar em backlog',
+    )
     await waitFor(() => expect(thirdCard).toHaveAttribute('tabindex', '0'))
     fireEvent.pointerDown(thirdCard, {
       ...sourcePoint,

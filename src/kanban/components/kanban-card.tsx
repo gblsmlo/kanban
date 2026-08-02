@@ -19,9 +19,13 @@ export function KanbanCard({
   ...props
 }: KanbanCardProps): ReactElement {
   return (
-    <Card className={cn(dimmed && 'opacity-70', className)} render={render} {...props}>
+    <Card
+      className={cn('min-w-0 max-w-full overflow-hidden', dimmed && 'opacity-70', className)}
+      render={render}
+      {...props}
+    >
       {renderContent ? (
-        <CardPanel className={cn('p-4', contentClassName)}>{children}</CardPanel>
+        <CardPanel className={cn('min-w-0 max-w-full p-4', contentClassName)}>{children}</CardPanel>
       ) : (
         children
       )}

@@ -1,5 +1,7 @@
 # Acoes no cabecalho da secao
 
+**Status:** implementado e coberto por testes unitários e pela story `Board`.
+
 ## Contexto
 
 Cada secao do quadro deve oferecer acoes rapidas sem deslocar o titulo ou o

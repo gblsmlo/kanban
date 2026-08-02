@@ -1,12 +1,14 @@
 import { CollisionPriority } from '@dnd-kit/abstract'
 import { useDroppable } from '@dnd-kit/react'
+import { EllipsisIcon, PlusIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useId } from 'react'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '../../lib/utils'
 
 import { createColumnDropId } from '../lib/drag-and-drop'
-import type { KanbanColumnData } from '../types'
+import type { KanbanColumnActions, KanbanColumnData } from '../types'
 import { KanbanBadge } from './kanban-badge'
 import { SortableKanbanCard } from './sortable-kanban-card'
 
@@ -19,6 +21,7 @@ export interface KanbanColumnProps<TCard = unknown> {
   getCardDragId?: (card: TCard) => string
   getCardLabel?: (card: TCard) => string
   sortableCards?: boolean
+  actions?: KanbanColumnActions
 }
 
 function KanbanEmptyState({
@@ -28,7 +31,7 @@ function KanbanEmptyState({
   return (
     <div
       className={cn(
-        'rounded-md border border-dashed px-3 py-6 text-center text-muted-foreground text-sm',
+        'min-w-0 max-w-full rounded-md border border-dashed px-3 py-6 text-center text-muted-foreground text-sm',
         className,
       )}
     >
@@ -38,9 +41,14 @@ function KanbanEmptyState({
 }
 
 function KanbanColumnHeader<TCard>({
+  actions,
   column,
   titleId,
-}: Readonly<{ column: KanbanColumnData<TCard>; titleId: string }>) {
+}: Readonly<{
+  actions?: KanbanColumnActions
+  column: KanbanColumnData<TCard>
+  titleId: string
+}>) {
   return (
     <header className="mb-3 flex shrink-0 items-center justify-between gap-3 px-3 pt-3">
       <div className="flex min-w-0 items-center gap-2">
@@ -49,6 +57,30 @@ function KanbanColumnHeader<TCard>({
         </h2>
         <KanbanBadge tone="neutral">{column.count}</KanbanBadge>
       </div>
+      {actions?.onOpenSettings || actions?.onAddCard ? (
+        <div className="flex shrink-0 items-center gap-0.5">
+          {actions.onOpenSettings ? (
+            <Button
+              aria-label={actions.settingsLabel ?? `Configurar seção ${column.title}`}
+              onClick={() => actions.onOpenSettings?.(column.id)}
+              size="icon-xs"
+              variant="ghost"
+            >
+              <EllipsisIcon aria-hidden="true" />
+            </Button>
+          ) : null}
+          {actions.onAddCard ? (
+            <Button
+              aria-label={actions.addLabel ?? `Adicionar item à seção ${column.title}`}
+              onClick={() => actions.onAddCard?.(column.id)}
+              size="icon-xs"
+              variant="ghost"
+            >
+              <PlusIcon aria-hidden="true" />
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </header>
   )
 }
@@ -77,7 +109,11 @@ function KanbanColumnCards<TCard>({
   }
 
   if (!sortableCards || !getCardDragId) {
-    return column.cards.map((card) => <div key={getKey(card)}>{renderCard(card)}</div>)
+    return column.cards.map((card) => (
+      <div className="min-w-0 max-w-full" data-kanban-card-container="" key={getKey(card)}>
+        {renderCard(card)}
+      </div>
+    ))
   }
 
   return column.cards.map((card, index) => (
@@ -102,6 +138,7 @@ export function KanbanColumn<TCard>({
   getCardDragId,
   getCardLabel = (card) => String(getKey(card)),
   sortableCards = false,
+  actions,
 }: KanbanColumnProps<TCard>) {
   const instanceId = useId()
   const titleId = `kanban-column-title-${instanceId}`
@@ -118,14 +155,17 @@ export function KanbanColumn<TCard>({
     <section
       aria-labelledby={titleId}
       className={cn(
-        'flex h-full min-h-0 flex-col rounded-lg bg-card/30 shadow-black/5 shadow-inner',
+        'flex h-full min-h-0 min-w-0 max-w-full flex-col rounded-lg bg-card/30 shadow-black/5 shadow-inner',
         className,
       )}
     >
-      <KanbanColumnHeader column={column} titleId={titleId} />
+      <KanbanColumnHeader actions={actions} column={column} titleId={titleId} />
 
       <ScrollArea className="min-h-0 flex-1" fill scrollbarGutter scrollFade>
-        <div ref={ref} className="grid h-full min-h-full content-start gap-2 px-2 pb-2">
+        <div
+          ref={ref}
+          className="grid h-full min-h-full min-w-0 max-w-full content-start gap-2 px-2 pb-2"
+        >
           <KanbanColumnCards
             column={column}
             emptyLabel={emptyLabel}
