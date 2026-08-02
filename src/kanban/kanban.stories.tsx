@@ -274,12 +274,21 @@ function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
 
 function InteractiveBoard() {
   const [columns, setColumns] = useState(initialColumns)
+  const [columnAction, setColumnAction] = useState('Nenhuma ação executada')
 
   return (
-    <div className="h-[560px] min-h-0 p-4">
+    <div className="h-[560px] min-h-0 max-w-[720px] p-4">
       <KanbanView
         columns={columns}
         getCardLabel={(card) => card.label}
+        getColumnActions={(column) =>
+          column.id === 'backlog'
+            ? {
+                onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
+                onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
+              }
+            : undefined
+        }
         getKey={(card) => card.id}
         mobileStageHint="Select a column to inspect its cards on small screens."
         onMoveCard={(move) => {
@@ -288,6 +297,9 @@ function InteractiveBoard() {
         }}
         renderCard={(card) => <ExampleCardView card={card} />}
       />
+      <output className="sr-only" data-column-action="">
+        {columnAction}
+      </output>
     </div>
   )
 }
@@ -514,6 +526,20 @@ type CardStory = StoryObj<{ loading?: boolean }>
 
 export const Board: Story = {
   play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const scrollArea = canvasElement.querySelector<HTMLElement>('[data-kanban-board-scroll-area]')
+    const viewport = scrollArea?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]')
+    const horizontalScrollbar = scrollArea?.querySelector<HTMLElement>(
+      '[data-orientation="horizontal"][data-slot="scroll-area-scrollbar"]',
+    )
+
+    await expect(scrollArea?.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
+    await expect(viewport).not.toBeNull()
+    await expect(horizontalScrollbar).not.toBeNull()
+    await userEvent.hover(viewport!)
+    await expect(scrollArea?.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
+    await expect(window.getComputedStyle(horizontalScrollbar!).opacity).toBe('0')
+    await expect(window.getComputedStyle(horizontalScrollbar!).transitionDelay).toBe('0s')
     await expect(visibleCardLabels(canvasElement).slice(0, 3)).toEqual([
       'Mover card Define the public contract',
       'Mover card Validate keyboard drag',
@@ -530,6 +556,22 @@ export const Board: Story = {
     )
     await expect(longTag.getBoundingClientRect().width).toBeLessThanOrEqual(
       card.getBoundingClientRect().width,
+    )
+
+    const settings = canvas.getAllByRole('button', { name: 'Configurar seção Backlog' })[0]!
+    const add = canvas.getAllByRole('button', { name: 'Adicionar item à seção Backlog' })[0]!
+
+    await expect(canvas.queryByRole('button', { name: 'Configurar seção Done' })).toBeNull()
+    settings.focus()
+    await expect(settings).toHaveFocus()
+    await userEvent.keyboard('{Enter}')
+    await expect(canvasElement.querySelector('[data-column-action]')).toHaveTextContent(
+      'Configurar backlog',
+    )
+    add.focus()
+    await userEvent.keyboard('{Enter}')
+    await expect(canvasElement.querySelector('[data-column-action]')).toHaveTextContent(
+      'Adicionar em backlog',
     )
   },
   render: () => <InteractiveBoard />,

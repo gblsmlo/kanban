@@ -1,7 +1,21 @@
-import { afterEach, describe, expect, test } from 'bun:test'
+import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { DragDropProvider } from '@dnd-kit/react'
 
 await import('../../test/dom')
+
+class TestPointerEvent extends window.MouseEvent {
+  isPrimary: boolean
+  pointerId: number
+
+  constructor(type: string, init: PointerEventInit = {}) {
+    super(type, init)
+    this.isPrimary = init.isPrimary ?? false
+    this.pointerId = init.pointerId ?? 0
+  }
+}
+
+Object.assign(window, { PointerEvent: TestPointerEvent })
+Object.assign(globalThis, { PointerEvent: TestPointerEvent })
 
 const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react')
 const { KanbanCard } = await import('./kanban-card')
@@ -21,6 +35,40 @@ const emptyColumn = {
 }
 
 describe('Kanban accessibility', () => {
+  test('renders optional per-column actions and identifies their column', async () => {
+    const onAddCard = mock(() => undefined)
+    const onOpenSettings = mock(() => undefined)
+    const columns = [emptyColumn, { ...emptyColumn, id: 'done', title: 'Done' }]
+
+    render(
+      <KanbanView
+        columns={columns}
+        getColumnActions={(column) =>
+          column.id === 'backlog' ? { onAddCard, onOpenSettings } : undefined
+        }
+        getKey={(card) => String(card)}
+        renderCard={String}
+      />,
+    )
+    await act(async () => undefined)
+
+    const settings = screen.getAllByRole('button', { name: 'Configurar seção Backlog' })[0]!
+    const add = screen.getAllByRole('button', { name: 'Adicionar item à seção Backlog' })[0]!
+
+    expect(screen.queryByRole('button', { name: 'Configurar seção Done' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Adicionar item à seção Done' })).toBeNull()
+
+    settings.focus()
+    expect(document.activeElement).toBe(settings)
+    fireEvent.click(settings)
+    add.focus()
+    expect(document.activeElement).toBe(add)
+    fireEvent.click(add)
+
+    expect(onOpenSettings).toHaveBeenCalledWith('backlog')
+    expect(onAddCard).toHaveBeenCalledWith('backlog')
+  })
+
   test('creates unique heading ids for duplicate responsive column instances', async () => {
     render(
       <DragDropProvider>
@@ -178,6 +226,68 @@ describe('Kanban accessibility', () => {
     expect(
       screen.getByRole('textbox', { name: 'Título do card' }).hasAttribute('aria-describedby'),
     ).toBeFalse()
+  })
+
+  test('shows the board scrollbar only during an active horizontal drag', async () => {
+    const column = {
+      cards: [{ id: 'card-1' }],
+      count: 1,
+      id: 'backlog',
+      title: 'Backlog',
+    }
+    const { container } = render(
+      <KanbanView
+        columns={[column]}
+        getKey={(card) => card.id}
+        onMoveCard={() => true}
+        renderCard={(card) => <article>{card.id}</article>}
+      />,
+    )
+    await act(async () => undefined)
+
+    const scrollArea = container.querySelector<HTMLElement>('[data-kanban-board-scroll-area]')!
+    const viewport = scrollArea.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]')!
+    const dragSurface = scrollArea.querySelector<HTMLElement>('h2')!
+
+    Object.defineProperties(viewport, {
+      clientWidth: { configurable: true, value: 300 },
+      scrollLeft: { configurable: true, value: 120, writable: true },
+      scrollWidth: { configurable: true, value: 900 },
+    })
+    viewport.setPointerCapture = () => undefined
+    viewport.hasPointerCapture = () => true
+    viewport.releasePointerCapture = () => undefined
+
+    expect(scrollArea.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
+    expect(scrollArea.className).toContain('!delay-0')
+    fireEvent.pointerOver(dragSurface)
+    expect(scrollArea.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
+
+    fireEvent.pointerDown(dragSurface, {
+      button: 0,
+      clientX: 200,
+      clientY: 20,
+      isPrimary: true,
+      pointerId: 1,
+    })
+    fireEvent.pointerMove(viewport, {
+      buttons: 1,
+      clientX: 120,
+      clientY: 20,
+      isPrimary: true,
+      pointerId: 1,
+    })
+
+    expect(scrollArea.getAttribute('data-kanban-horizontal-scrollbar')).toBe('visible')
+    expect(viewport.scrollLeft).toBe(200)
+
+    fireEvent.pointerUp(viewport, {
+      clientX: 120,
+      clientY: 20,
+      isPrimary: true,
+      pointerId: 1,
+    })
+    expect(scrollArea.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
   })
 
   test('keeps a read-only board passive with the default pointer', async () => {
