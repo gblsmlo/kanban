@@ -2,8 +2,7 @@ import { CollisionPriority } from '@dnd-kit/abstract'
 import { useDroppable } from '@dnd-kit/react'
 import type { ReactNode } from 'react'
 import { useId } from 'react'
-import { ScrollArea } from '../../components/scroll-area'
-import { Text } from '../../components/text'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '../../lib/utils'
 
 import { createColumnDropId } from '../lib/drag-and-drop'
@@ -45,13 +44,9 @@ function KanbanColumnHeader<TCard>({
   return (
     <header className="mb-3 flex shrink-0 items-center justify-between gap-3 px-3 pt-3">
       <div className="flex min-w-0 items-center gap-2">
-        <Text
-          leading="none"
-          render={<h2 id={titleId}>{column.title}</h2>}
-          size="sm"
-          truncate
-          weight="semibold"
-        />
+        <h2 className="truncate font-semibold text-sm leading-none" id={titleId}>
+          {column.title}
+        </h2>
         <KanbanBadge tone="neutral">{column.count}</KanbanBadge>
       </div>
     </header>

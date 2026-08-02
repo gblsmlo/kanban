@@ -1,6 +1,6 @@
 import { useId } from 'react'
-import { ScrollArea } from '../../components/scroll-area'
-import { cn } from '../../lib/utils'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 import type { KanbanStageOption } from '../types'
 
@@ -34,20 +34,15 @@ export function KanbanStageSelector({
           {stages.map((stage) => {
             const selected = stage.value === value
             return (
-              <button
+              <Button
                 aria-pressed={selected}
-                className={cn(
-                  'h-8 shrink-0 rounded-md px-2.5 font-medium text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
-                  selected
-                    ? 'bg-card text-foreground'
-                    : 'bg-card/45 text-muted-foreground hover:bg-card/70 hover:text-foreground',
-                )}
                 key={stage.value}
                 onClick={() => onValueChange(stage.value)}
-                type="button"
+                size="sm"
+                variant={selected ? 'secondary' : 'ghost'}
               >
                 {stage.label}
-              </button>
+              </Button>
             )
           })}
         </div>

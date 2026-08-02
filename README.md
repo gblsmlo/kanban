@@ -1,7 +1,7 @@
 # Kanban
 
 A domain-neutral, accessible Kanban view for React applications built with
-[COSS](https://github.com/cosscom/coss), Base UI, DnD Kit, and Tailwind CSS.
+[COSS](https://github.com/cosscom/coss) primitives, DnD Kit, and Tailwind CSS.
 
 The package provides the interaction and presentation layer for SaaS board
 views. Your application remains responsible for business stages, permissions,
@@ -18,26 +18,26 @@ remote state, mutations, navigation, and persistence.
 - responsive desktop board and mobile stage selector
 - horizontal desktop scrolling by clicking, holding, and dragging the board
 - minimal drag motion with DnD Kit DragOverlay, feedback, and accessibility plugins
-- COSS visual primitives implemented on Base UI
+- COSS-first visual primitives with no direct Base UI usage in the Kanban pattern
 
 ## Requirements
 
 - React 19
 - Base UI 1.x
+- Lucide React 1.x
 - Tailwind CSS 4
 
-The package is COSS-first. COSS is distributed as source through its component
-registry, so this repository owns the small set of COSS primitives required by
-the view. A future Radix implementation will be a separate adapter and will not
-change the domain-neutral contract.
+The package is COSS-first. Every Kanban component imports visual primitives from
+`@/components/ui/*`; only the copy-owned COSS source in `src/components/ui`
+depends on its Base UI internals. The source registry does not copy those files
+into the pattern. It declares the official COSS registry dependencies so the
+consumer receives them through its configured `ui` alias.
 
-`KanbanCardSkeleton` uses the canonical
-[COSS Skeleton](https://coss.com/ui/docs/components/skeleton). The npm build
-bundles the
-[upstream `ui/skeleton` source](https://github.com/cosscom/coss/blob/main/apps/ui/registry/default/ui/skeleton.tsx)
-locally because COSS components are copy-owned. The source registry instead
-declares `@coss/skeleton`, which installs the primitive at
-`@/components/ui/skeleton` through the consumer's `ui` alias.
+The view composes the canonical COSS `Badge`, `Button`, `Card`, `ScrollArea`,
+and `Skeleton` primitives. The npm build bundles their copy-owned source. The
+source registry instead declares `@coss/badge`, `@coss/button`, `@coss/card`,
+`@coss/scroll-area`, and `@coss/skeleton`, installing them at
+`@/components/ui/*` through the consumer's `ui` alias.
 
 ## Installation
 
@@ -52,7 +52,7 @@ pnpm add @tc96/kanban
 The consumer must already provide the peer dependencies:
 
 ```bash
-pnpm add react react-dom @base-ui/react tailwindcss
+pnpm add react react-dom @base-ui/react lucide-react tailwindcss
 ```
 
 ### COSS source location
@@ -84,9 +84,9 @@ bunx shadcn@latest add ./node_modules/@tc96/kanban/registry/kanban.json
 ```
 
 The registry item targets `@components/patterns/kanban` for the pattern source
-and declares `@coss/skeleton` as a registry dependency. The shadcn CLI therefore
-installs the COSS primitive through `aliases.ui` while keeping the Kanban source
-under `./components/patterns/kanban`.
+and declares every required `@coss/*` primitive as a registry dependency. The
+shadcn CLI therefore installs visual primitives through `aliases.ui` while
+keeping only Kanban-specific source under `./components/patterns/kanban`.
 
 Tailwind must scan the installed package and your theme must expose the standard
 COSS semantic tokens. The official

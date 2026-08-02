@@ -2,39 +2,17 @@
 
 import { mergeProps } from '@base-ui/react/merge-props'
 import { useRender } from '@base-ui/react/use-render'
-import { cva, type VariantProps } from 'class-variance-authority'
 import type React from 'react'
-import { cn } from '../lib/utils'
+import { cn } from '../../lib/utils'
 
-export const cardVariants = cva(
-  'relative flex flex-col rounded-lg border bg-card not-dark:bg-clip-padding text-card-foreground shadow-xs/6 before:pointer-events-none before:absolute before:inset-0',
-  {
-    defaultVariants: {
-      density: 'md',
-    },
-    variants: {
-      density: {
-        lg: '[--card-padding:--spacing(8)] [--card-section-gap:--spacing(6)]',
-        md: '[--card-padding:--spacing(6)] [--card-section-gap:--spacing(4)]',
-        sm: '[--card-padding:--spacing(4)] [--card-section-gap:--spacing(2)]',
-      },
-    },
-  },
-)
+export type CardProps = useRender.ComponentProps<'div'>
 
-export interface CardProps extends useRender.ComponentProps<'div'> {
-  density?: VariantProps<typeof cardVariants>['density']
-}
-
-export function Card({
-  className,
-  density = 'md',
-  render,
-  ...props
-}: CardProps): React.ReactElement {
+export function Card({ className, render, ...props }: CardProps): React.ReactElement {
   const defaultProps = {
-    className: cn(cardVariants({ className, density })),
-    'data-density': density,
+    className: cn(
+      'relative flex flex-col rounded-2xl border bg-card not-dark:bg-clip-padding text-card-foreground shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]',
+      className,
+    ),
     'data-slot': 'card',
   }
 
@@ -52,7 +30,7 @@ export function CardFrame({
 }: useRender.ComponentProps<'div'>): React.ReactElement {
   const defaultProps = {
     className: cn(
-      'relative flex flex-col rounded-xl border bg-card not-dark:bg-clip-padding text-card-foreground shadow-xs/5 [--clip-bottom:-1rem] [--clip-top:-1rem] before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:bg-muted/72 before:shadow-[0_1px_--theme(--color-black/4%)] has-data-[slot=table-container]:overflow-hidden *:data-[slot=card]:-m-px *:data-[slot=table-container]:-m-px *:data-[slot=table-container]:w-[calc(100%+2px)] *:not-first:data-[slot=card]:rounded-t-xl *:not-last:data-[slot=card]:rounded-b-xl *:data-[slot=card]:bg-clip-padding *:data-[slot=card]:shadow-none *:data-[slot=card]:before:hidden *:not-first:data-[slot=card]:before:rounded-t-[calc(var(--radius-xl)-1px)] *:not-last:data-[slot=card]:before:rounded-b-[calc(var(--radius-xl)-1px)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)] *:data-[slot=card]:[clip-path:inset(var(--clip-top)_1px_var(--clip-bottom)_1px_round_calc(var(--radius-2xl)-1px))] *:data-[slot=card]:last:[--clip-bottom:1px] *:data-[slot=card]:first:[--clip-top:1px]',
+      'relative flex flex-col rounded-2xl border bg-card not-dark:bg-clip-padding text-card-foreground shadow-xs/5 [--clip-bottom:-1rem] [--clip-top:-1rem] before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:bg-muted/72 before:shadow-[0_1px_--theme(--color-black/4%)] has-data-[slot=table-container]:overflow-hidden *:data-[slot=card]:-m-px *:data-[slot=table-container]:-m-px *:data-[slot=table-container]:w-[calc(100%+2px)] *:not-first:data-[slot=card]:rounded-t-xl *:not-last:data-[slot=card]:rounded-b-xl *:data-[slot=card]:bg-clip-padding *:data-[slot=card]:shadow-none *:data-[slot=card]:before:hidden *:not-first:data-[slot=card]:before:rounded-t-[calc(var(--radius-xl)-1px)] *:not-last:data-[slot=card]:before:rounded-b-[calc(var(--radius-xl)-1px)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)] *:data-[slot=card]:[clip-path:inset(var(--clip-top)_1px_var(--clip-bottom)_1px_round_calc(var(--radius-2xl)-1px))] *:data-[slot=card]:last:[--clip-bottom:1px] *:data-[slot=card]:first:[--clip-top:1px]',
       className,
     ),
     'data-slot': 'card-frame',
@@ -163,7 +141,7 @@ export function CardHeader({
 }: useRender.ComponentProps<'div'>): React.ReactElement {
   const defaultProps = {
     className: cn(
-      'grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 p-(--card-padding) in-[[data-slot=card]:has(>[data-slot=card-panel])]:pb-(--card-section-gap) has-data-[slot=card-action]:grid-cols-[1fr_auto]',
+      'grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 p-6 in-[[data-slot=card]:has(>[data-slot=card-panel])]:pb-4 has-data-[slot=card-action]:grid-cols-[1fr_auto]',
       className,
     ),
     'data-slot': 'card-header',
@@ -182,7 +160,7 @@ export function CardTitle({
   ...props
 }: useRender.ComponentProps<'div'>): React.ReactElement {
   const defaultProps = {
-    className: cn('font-semibold text-lg leading-none', className),
+    className: cn('font-heading font-semibold text-lg leading-none', className),
     'data-slot': 'card-title',
   }
 
@@ -237,7 +215,7 @@ export function CardPanel({
 }: useRender.ComponentProps<'div'>): React.ReactElement {
   const defaultProps = {
     className: cn(
-      'flex-1 p-(--card-padding) in-[[data-slot=card]:has(>[data-slot=card-header]:not(.border-b))]:pt-0 in-[[data-slot=card]:has(>[data-slot=card-footer]:not(.border-t))]:pb-0',
+      'flex-1 p-6 in-[[data-slot=card]:has(>[data-slot=card-header]:not(.border-b))]:pt-0 in-[[data-slot=card]:has(>[data-slot=card-footer]:not(.border-t))]:pb-0',
       className,
     ),
     'data-slot': 'card-panel',
@@ -257,7 +235,7 @@ export function CardFooter({
 }: useRender.ComponentProps<'div'>): React.ReactElement {
   const defaultProps = {
     className: cn(
-      'flex items-center p-(--card-padding) in-[[data-slot=card]:has(>[data-slot=card-panel])]:pt-(--card-section-gap)',
+      'flex items-center p-6 in-[[data-slot=card]:has(>[data-slot=card-panel])]:pt-4',
       className,
     ),
     'data-slot': 'card-footer',

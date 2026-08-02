@@ -159,10 +159,12 @@ describe('Kanban accessibility', () => {
     )
     await act(async () => undefined)
 
-    const viewport = container.querySelector<HTMLElement>('[data-kanban-board-viewport]')
+    const scrollArea = container.querySelector<HTMLElement>('[data-kanban-board-scroll-area]')
+    const viewport = scrollArea?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]')
+    expect(scrollArea).not.toBeNull()
     expect(viewport).not.toBeNull()
-    expect(viewport?.classList.contains('cursor-default')).toBeTrue()
-    expect(viewport?.classList.contains('cursor-grab')).toBeFalse()
+    expect(scrollArea?.className).toContain('cursor-default')
+    expect(scrollArea?.className).not.toContain('cursor-grab')
     expect(container.querySelector('[data-kanban-card-draggable]')).toBeNull()
 
     Object.defineProperties(viewport!, {
@@ -185,6 +187,6 @@ describe('Kanban accessibility', () => {
     })
 
     expect(viewport?.scrollLeft).toBe(0)
-    expect(viewport?.hasAttribute('data-drag-scrolling')).toBeFalse()
+    expect(scrollArea?.hasAttribute('data-drag-scrolling')).toBeFalse()
   })
 })
