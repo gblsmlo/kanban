@@ -1,6 +1,6 @@
 # Reordenar cards dentro da mesma seção
 
-**Status:** implementado, com ordenação ascendente/descendente, reconciliação otimista e `Board` restaurável.
+**Status:** implementado, com ordenação ascendente/descendente, reconciliação otimista e evidência automatizada no Chromium.
 
 ## Contexto
 
@@ -55,10 +55,12 @@ seções: não existem modos ou regras concorrentes para movimento em X e Y.
 - Testes cobrem movimentos para cima e para baixo, inclusive o caso 2 → 1,
   confirmação do consumer, cache obsoleto, rollback e reconciliação da posição
   persistida.
-- Stories de interação documentam e validam em Chromium a priorização por
-  ponteiro, a priorização por teclado, a persistência assíncrona diante de
-  cache obsoleto e o rollback quando o consumer rejeita a mudança.
-- Uma story manual, sem `play` automático, permite arrastar livremente e
+- Stories de aceitação ocultas da navegação documentam e validam em Chromium a
+  priorização por ponteiro, a priorização por teclado, a persistência assíncrona
+  diante de cache obsoleto e o rollback quando o consumer rejeita a mudança.
+  Elas continuam com a tag `test`, mas removem `dev` e `autodocs`, preservando
+  apenas `Board`, `Card`, `Read Only` e `Toolbar` como exemplos visíveis.
+- A story `Board`, sem `play` automático, permite arrastar livremente e
   restaurar a ordem inicial para inspeção visual. Ela contém cinco cards na
   primeira coluna e uma segunda coluna para validar movimentos nos eixos X e Y.
 
