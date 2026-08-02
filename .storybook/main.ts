@@ -12,6 +12,9 @@ const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   viteFinal: async (viteConfig) =>
     mergeConfig(viteConfig, {
+      optimizeDeps: {
+        include: ['@base-ui/react/menu'],
+      },
       plugins: [tailwindcss()],
       resolve: {
         alias: {
