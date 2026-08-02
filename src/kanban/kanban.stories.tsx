@@ -14,7 +14,7 @@ import {
   UserPlusIcon,
   type LucideIcon,
 } from 'lucide-react'
-import { expect, userEvent, within } from 'storybook/test'
+import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test'
 import { useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -134,6 +134,21 @@ const initialColumns: KanbanColumnData<ExampleCard>[] = [
   },
 ]
 
+const orderingColumns: KanbanColumnData<ExampleCard>[] = [
+  {
+    cards,
+    count: cards.length,
+    id: 'backlog',
+    title: 'Backlog',
+  },
+  {
+    cards: [],
+    count: 0,
+    id: 'done',
+    title: 'Done',
+  },
+]
+
 const toolbarColumns: KanbanColumnData<ExampleCard>[] = [
   {
     cards: [cards[0]!],
@@ -248,6 +263,10 @@ function moveCard(
   return next.map((column) => ({ ...column, count: column.cards.length }))
 }
 
+function cloneColumns(columns: KanbanColumnData<ExampleCard>[]): KanbanColumnData<ExampleCard>[] {
+  return columns.map((column) => ({ ...column, cards: [...column.cards] }))
+}
+
 function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
   return (
     <KanbanCard>
@@ -272,31 +291,75 @@ function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
   )
 }
 
-function InteractiveBoard() {
-  const [columns, setColumns] = useState(initialColumns)
+type PersistenceExample = 'accept' | 'reject' | 'stale-cache'
+
+function InteractiveBoard({
+  persistence = 'accept',
+  showRestore = true,
+}: Readonly<{ persistence?: PersistenceExample; showRestore?: boolean }>) {
+  const [columns, setColumns] = useState(orderingColumns)
+  const [persistenceStatus, setPersistenceStatus] = useState('idle')
   const [columnAction, setColumnAction] = useState('Nenhuma ação executada')
 
+  const restoreOrder = () => {
+    setColumns(cloneColumns(orderingColumns))
+    setPersistenceStatus('idle')
+  }
+
   return (
-    <div className="h-[560px] min-h-0 max-w-[720px] p-4">
-      <KanbanView
-        columns={columns}
-        getCardLabel={(card) => card.label}
-        getColumnActions={(column) =>
-          column.id === 'backlog'
-            ? {
-                onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
-                onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
-              }
-            : undefined
-        }
-        getKey={(card) => card.id}
-        mobileStageHint="Select a column to inspect its cards on small screens."
-        onMoveCard={(move) => {
-          setColumns((current) => moveCard(current, move))
-          return true
-        }}
-        renderCard={(card) => <ExampleCardView card={card} />}
-      />
+    <div
+      className="grid h-[560px] min-h-0 min-w-0 grid-rows-[auto_1fr] gap-2 p-4"
+      style={{ width: 480 }}
+    >
+      {showRestore ? (
+        <div className="flex justify-end">
+          <Button onClick={restoreOrder} size="sm" variant="secondary">
+            <RotateCcwIcon aria-hidden="true" />
+            Restore order
+          </Button>
+        </div>
+      ) : (
+        <output className="sr-only" data-persistence-status="">
+          {persistenceStatus}
+        </output>
+      )}
+      <div className="min-h-0 min-w-0">
+        <KanbanView
+          columns={columns}
+          getCardLabel={(card) => card.label}
+          getColumnActions={(column) =>
+            column.id === 'backlog'
+              ? {
+                  onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
+                  onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
+                }
+              : undefined
+          }
+          getKey={(card) => card.id}
+          mobileStageHint="Select a column to inspect its cards on small screens."
+          onMoveCard={(move) => {
+            if (persistence === 'accept') {
+              setColumns((current) => moveCard(current, move))
+              setPersistenceStatus('accepted')
+              return true
+            }
+
+            const persistedColumns = moveCard(columns, move)
+            setPersistenceStatus('pending')
+            setColumns(cloneColumns(orderingColumns))
+
+            return new Promise<boolean>((resolve) => {
+              window.setTimeout(() => {
+                const accepted = persistence === 'stale-cache'
+                setColumns(accepted ? persistedColumns : cloneColumns(orderingColumns))
+                setPersistenceStatus(accepted ? 'accepted' : 'rejected')
+                resolve(accepted)
+              }, 600)
+            })
+          }}
+          renderCard={(card) => <ExampleCardView card={card} />}
+        />
+      </div>
       <output className="sr-only" data-column-action="">
         {columnAction}
       </output>
@@ -512,6 +575,19 @@ function visibleCardLabels(canvasElement: HTMLElement): string[] {
   ).map((card) => card.getAttribute('aria-label') ?? '')
 }
 
+function draggableCard(canvasElement: HTMLElement, label: string): HTMLElement {
+  const card = Array.from(
+    canvasElement.querySelectorAll<HTMLElement>('[data-kanban-card-draggable]'),
+  ).find((candidate) => candidate.getAttribute('aria-label') === label)
+
+  if (!card) throw new Error(`Draggable card not found: ${label}`)
+  return card
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise((resolve) => window.requestAnimationFrame(() => resolve()))
+}
+
 const meta = {
   component: KanbanView,
   parameters: {
@@ -525,31 +601,75 @@ type Story = StoryObj
 type CardStory = StoryObj<{ loading?: boolean }>
 
 export const Board: Story = {
+  render: () => <InteractiveBoard />,
+}
+
+const initialOrderingLabels = [
+  'Mover card Define the public contract',
+  'Mover card Validate keyboard drag',
+  'Mover card Document composition',
+  'Mover card Persist card priority',
+  'Mover card Review release evidence',
+]
+
+const prioritizedOrderingLabels = [
+  'Mover card Define the public contract',
+  'Mover card Document composition',
+  'Mover card Validate keyboard drag',
+  'Mover card Persist card priority',
+  'Mover card Review release evidence',
+]
+
+async function moveThirdCardUpWithKeyboard(canvasElement: HTMLElement) {
+  const thirdCard = draggableCard(canvasElement, 'Mover card Document composition')
+
+  await waitFor(() => expect(thirdCard).toHaveAttribute('tabindex', '0'))
+  thirdCard.focus()
+  await expect(thirdCard).toHaveFocus()
+  await userEvent.keyboard('[Space][ArrowUp][Space]')
+}
+
+export const PointerOrderingAcceptance: Story = {
+  tags: ['!dev', '!autodocs'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const scrollArea = canvasElement.querySelector<HTMLElement>('[data-kanban-board-scroll-area]')
     const viewport = scrollArea?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]')
-    const horizontalScrollbar = scrollArea?.querySelector<HTMLElement>(
-      '[data-orientation="horizontal"][data-slot="scroll-area-scrollbar"]',
-    )
+    const longTag = canvasElement.querySelector<HTMLElement>('[data-long-tag]')!
+    const card = longTag.closest<HTMLElement>('[data-slot="card"]')!
+    const column = longTag.closest<HTMLElement>('section[aria-labelledby]')!
+    const settings = canvas.getAllByRole('button', { name: 'Configurar seção Backlog' })[0]!
+    const add = canvas.getAllByRole('button', { name: 'Adicionar item à seção Backlog' })[0]!
+    const thirdCard = draggableCard(canvasElement, 'Mover card Document composition')
+    const secondCard = draggableCard(canvasElement, 'Mover card Validate keyboard drag')
+    const sourceRect = thirdCard.getBoundingClientRect()
+    const targetRect = secondCard.getBoundingClientRect()
+    const sourcePoint = {
+      clientX: sourceRect.left + sourceRect.width / 2,
+      clientY: sourceRect.top + sourceRect.height / 2,
+    }
+    const targetPoint = {
+      clientX: targetRect.left + targetRect.width / 2,
+      clientY: targetRect.top + targetRect.height / 4,
+    }
 
+    await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual(initialOrderingLabels)
     await expect(scrollArea?.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
     await expect(viewport).not.toBeNull()
-    await expect(horizontalScrollbar).not.toBeNull()
+    await waitFor(() =>
+      expect(
+        scrollArea?.querySelector(
+          '[data-orientation="horizontal"][data-slot="scroll-area-scrollbar"]',
+        ),
+      ).not.toBeNull(),
+    )
+    const horizontalScrollbar = scrollArea!.querySelector<HTMLElement>(
+      '[data-orientation="horizontal"][data-slot="scroll-area-scrollbar"]',
+    )!
     await userEvent.hover(viewport!)
     await expect(scrollArea?.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
     await expect(window.getComputedStyle(horizontalScrollbar!).opacity).toBe('0')
     await expect(window.getComputedStyle(horizontalScrollbar!).transitionDelay).toBe('0s')
-    await expect(visibleCardLabels(canvasElement).slice(0, 3)).toEqual([
-      'Mover card Define the public contract',
-      'Mover card Validate keyboard drag',
-      'Mover card Document composition',
-    ])
-
-    const longTag = canvasElement.querySelector<HTMLElement>('[data-long-tag]')!
-    const card = longTag.closest<HTMLElement>('[data-slot="card"]')!
-    const column = longTag.closest<HTMLElement>('section[aria-labelledby]')!
-
     await expect(longTag.title).toBe(cards[0]!.tag)
     await expect(card.getBoundingClientRect().width).toBeLessThanOrEqual(
       column.getBoundingClientRect().width,
@@ -557,10 +677,6 @@ export const Board: Story = {
     await expect(longTag.getBoundingClientRect().width).toBeLessThanOrEqual(
       card.getBoundingClientRect().width,
     )
-
-    const settings = canvas.getAllByRole('button', { name: 'Configurar seção Backlog' })[0]!
-    const add = canvas.getAllByRole('button', { name: 'Adicionar item à seção Backlog' })[0]!
-
     await expect(canvas.queryByRole('button', { name: 'Configurar seção Done' })).toBeNull()
     settings.focus()
     await expect(settings).toHaveFocus()
@@ -573,8 +689,90 @@ export const Board: Story = {
     await expect(canvasElement.querySelector('[data-column-action]')).toHaveTextContent(
       'Adicionar em backlog',
     )
+    await waitFor(() => expect(thirdCard).toHaveAttribute('tabindex', '0'))
+    fireEvent.pointerDown(thirdCard, {
+      ...sourcePoint,
+      button: 0,
+      buttons: 1,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+    await nextAnimationFrame()
+    fireEvent.pointerMove(thirdCard, {
+      ...sourcePoint,
+      buttons: 1,
+      clientY: sourcePoint.clientY - 12,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+    await waitFor(() => expect(thirdCard).toHaveAttribute('aria-grabbed', 'true'))
+    fireEvent.pointerMove(secondCard, {
+      ...targetPoint,
+      buttons: 1,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+    await nextAnimationFrame()
+    fireEvent.pointerUp(secondCard, {
+      ...targetPoint,
+      button: 0,
+      buttons: 0,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+    })
+
+    await waitFor(() =>
+      expect(canvasElement.querySelector('[data-persistence-status]')).toHaveTextContent(
+        'accepted',
+      ),
+    )
+    await waitFor(() =>
+      expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual(prioritizedOrderingLabels),
+    )
   },
-  render: () => <InteractiveBoard />,
+  render: () => <InteractiveBoard showRestore={false} />,
+}
+
+export const StaleCacheAcceptance: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    await moveThirdCardUpWithKeyboard(canvasElement)
+
+    await expect(canvasElement.querySelector('[data-persistence-status]')).toHaveTextContent(
+      'pending',
+    )
+    await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual(prioritizedOrderingLabels)
+    await waitFor(() =>
+      expect(canvasElement.querySelector('[data-persistence-status]')).toHaveTextContent(
+        'accepted',
+      ),
+    )
+    await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual(prioritizedOrderingLabels)
+  },
+  render: () => <InteractiveBoard persistence="stale-cache" showRestore={false} />,
+}
+
+export const RollbackAcceptance: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    await moveThirdCardUpWithKeyboard(canvasElement)
+
+    await expect(canvasElement.querySelector('[data-persistence-status]')).toHaveTextContent(
+      'pending',
+    )
+    await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual(prioritizedOrderingLabels)
+    await waitFor(() =>
+      expect(canvasElement.querySelector('[data-persistence-status]')).toHaveTextContent(
+        'rejected',
+      ),
+    )
+    await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual(initialOrderingLabels)
+  },
+  render: () => <InteractiveBoard persistence="reject" showRestore={false} />,
 }
 
 export const Card: CardStory = {
