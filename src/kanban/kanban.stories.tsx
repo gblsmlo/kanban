@@ -1,7 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect } from 'storybook/test'
+import { FilterIcon, SettingsIcon } from 'lucide-react'
+import { expect, fn, userEvent, within } from 'storybook/test'
 import { useState } from 'react'
 
+import { Button } from '../components/ui/button'
+import { Toolbar as CossToolbar, ToolbarButton, ToolbarGroup } from '../components/ui/toolbar'
 import {
   KanbanBadge,
   KanbanCard,
@@ -72,6 +75,39 @@ const initialColumns: KanbanColumnData<ExampleCard>[] = [
   },
 ]
 
+const toolbarColumns: KanbanColumnData<ExampleCard>[] = [
+  {
+    cards: [cards[0]!],
+    count: 1,
+    id: 'backlog',
+    title: 'Backlog',
+  },
+  {
+    cards: [cards[1]!],
+    count: 1,
+    id: 'todo',
+    title: 'Todo',
+  },
+  {
+    cards: [cards[2]!],
+    count: 1,
+    id: 'in-progress',
+    title: 'In Progress',
+  },
+  {
+    cards: [cards[3]!],
+    count: 1,
+    id: 'in-review',
+    title: 'In Review',
+  },
+  {
+    cards: [cards[4]!],
+    count: 1,
+    id: 'done',
+    title: 'Done',
+  },
+]
+
 function moveCard(
   columns: KanbanColumnData<ExampleCard>[],
   move: KanbanCardMove<ExampleCard>,
@@ -129,6 +165,54 @@ function InteractiveBoard() {
   )
 }
 
+function ToolbarBoard({
+  onFilter,
+  onSettings,
+}: Readonly<{ onFilter: () => void; onSettings: () => void }>) {
+  const [columns, setColumns] = useState(toolbarColumns)
+
+  return (
+    <div className="grid h-[640px] min-h-0 min-w-0 grid-rows-[auto_1fr] gap-3 p-4">
+      <CossToolbar
+        aria-label="Board toolbar"
+        className="min-w-0 flex-wrap items-center justify-between gap-3 px-3 py-2"
+      >
+        <ToolbarGroup aria-label="Board context" data-toolbar-side="left">
+          <div className="min-w-0 px-1">
+            <h1 className="truncate font-semibold text-sm">Product delivery</h1>
+            <p className="text-muted-foreground text-xs">5 workflow stages</p>
+          </div>
+        </ToolbarGroup>
+
+        <ToolbarGroup aria-label="Board actions" className="ml-auto" data-toolbar-side="right">
+          <ToolbarButton onClick={onFilter} render={<Button variant="secondary" />}>
+            <FilterIcon aria-hidden="true" />
+            Filter
+          </ToolbarButton>
+          <ToolbarButton onClick={onSettings} render={<Button variant="secondary" />}>
+            <SettingsIcon aria-hidden="true" />
+            Settings
+          </ToolbarButton>
+        </ToolbarGroup>
+      </CossToolbar>
+
+      <div className="min-h-0 min-w-0">
+        <KanbanView
+          columns={columns}
+          getCardLabel={(card) => card.label}
+          getKey={(card) => card.id}
+          mobileStageHint="Select a workflow stage."
+          onMoveCard={(move) => {
+            setColumns((current) => moveCard(current, move))
+            return true
+          }}
+          renderCard={(card) => <ExampleCardView card={card} />}
+        />
+      </div>
+    </div>
+  )
+}
+
 function visibleCardLabels(canvasElement: HTMLElement): string[] {
   return Array.from(
     canvasElement.querySelectorAll<HTMLElement>('[data-kanban-card-draggable]'),
@@ -146,6 +230,7 @@ const meta = {
 export default meta
 type Story = StoryObj
 type CardStory = StoryObj<{ loading?: boolean }>
+type ToolbarStory = StoryObj<{ onFilter: () => void; onSettings: () => void }>
 
 export const Board: Story = {
   play: async ({ canvasElement }) => {
@@ -197,5 +282,36 @@ export const ReadOnly: Story = {
         renderCard={(card) => <ExampleCardView card={card} />}
       />
     </div>
+  ),
+}
+
+export const Toolbar: ToolbarStory = {
+  args: {
+    onFilter: fn(),
+    onSettings: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement)
+    const toolbar = canvas.getByRole('toolbar', { name: 'Board toolbar' })
+    const filterButton = canvas.getByRole('button', { name: 'Filter' })
+    const settingsButton = canvas.getByRole('button', { name: 'Settings' })
+    const columnTitles = canvas
+      .getAllByRole('heading', { level: 2 })
+      .map((heading) => heading.textContent)
+
+    await expect(toolbar.querySelector('[data-toolbar-side="left"]')).not.toBeNull()
+    await expect(toolbar.querySelector('[data-toolbar-side="right"]')).not.toBeNull()
+    await expect(columnTitles).toEqual(['Backlog', 'Todo', 'In Progress', 'In Review', 'Done'])
+    await expect(filterButton).toHaveClass('bg-secondary')
+    await expect(settingsButton).toHaveClass('bg-secondary')
+
+    await userEvent.click(filterButton)
+    await userEvent.click(settingsButton)
+
+    await expect(args.onFilter).toHaveBeenCalledOnce()
+    await expect(args.onSettings).toHaveBeenCalledOnce()
+  },
+  render: ({ onFilter, onSettings }) => (
+    <ToolbarBoard onFilter={onFilter} onSettings={onSettings} />
   ),
 }
