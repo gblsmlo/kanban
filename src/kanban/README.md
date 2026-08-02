@@ -15,6 +15,13 @@ placeholder is passive, keeps the card surface stable, and communicates its
 loading state with `role="status"` and `aria-busy="true"` without requiring a
 fake domain card.
 
+`KanbanCard` is a COSS `Card` surface and keeps consumer-provided
+`KanbanCardHeader`, `KanbanCardContent`, and `KanbanCardFooter` as direct
+children. Labels belong in the content; the footer is available for metadata
+such as assignee or date. Consumers may adjust typography through
+`KanbanCardTitle`/`KanbanCardDescription`, but should preserve the section
+hierarchy and spacing.
+
 All visual dependencies cross the COSS boundary at `@/components/ui/*`. The
 source registry installs `badge`, `button`, `card`, `scroll-area`, and
 `skeleton` from `@coss/*`, so the consumer owns those primitives through the

@@ -37,7 +37,11 @@ import { Toolbar as CossToolbar, ToolbarButton, ToolbarGroup } from '@/component
 import {
   KanbanBadge,
   KanbanCard,
-  KanbanCardSkeleton,
+  KanbanCardContent,
+  KanbanCardDescription,
+  KanbanCardFooter,
+  KanbanCardHeader,
+  KanbanCardTitle,
   type KanbanCardMove,
   type KanbanColumnData,
   KanbanView,
@@ -52,7 +56,7 @@ interface ExampleCard {
   labels: string[]
   priority: string
   summary: string
-  tag: string
+  tags: string[]
 }
 
 const cards: ExampleCard[] = [
@@ -65,7 +69,7 @@ const cards: ExampleCard[] = [
     labels: ['API'],
     priority: 'High',
     summary: 'Describe the data and callbacks owned by the consumer.',
-    tag: 'API contract requiring backwards-compatible migration planning',
+    tags: ['API'],
   },
   {
     assignee: 'Bruno',
@@ -76,7 +80,7 @@ const cards: ExampleCard[] = [
     labels: ['A11y'],
     priority: 'Urgent',
     summary: 'Keep movement accessible without nesting interactive controls.',
-    tag: 'A11y',
+    tags: ['A11y', 'Keyboard'],
   },
   {
     assignee: 'Casey',
@@ -87,7 +91,7 @@ const cards: ExampleCard[] = [
     labels: ['Docs'],
     priority: 'Medium',
     summary: 'Show how products provide their own card content.',
-    tag: 'Docs',
+    tags: ['Docs', 'Composition', 'API'],
   },
   {
     assignee: 'Ana',
@@ -98,7 +102,7 @@ const cards: ExampleCard[] = [
     labels: ['State'],
     priority: 'High',
     summary: 'Apply the requested target index in the consumer data source.',
-    tag: 'State',
+    tags: ['State management', 'High priority', 'Optimistic interface', 'Cache synchronization'],
   },
   {
     assignee: 'Dana',
@@ -109,7 +113,7 @@ const cards: ExampleCard[] = [
     labels: ['QA'],
     priority: 'Low',
     summary: 'Confirm the package remains domain-neutral and accessible.',
-    tag: 'QA',
+    tags: ['QA'],
   },
 ]
 
@@ -270,59 +274,88 @@ function cloneColumns(columns: KanbanColumnData<ExampleCard>[]): KanbanColumnDat
 function ExampleCardView({ card }: Readonly<{ card: ExampleCard }>) {
   return (
     <KanbanCard>
-      <div className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <p className="min-w-0 font-medium text-sm">{card.label}</p>
-          <div
-            className="min-w-0 max-w-[50%]"
-            data-long-tag={card.tag.length > 20 ? '' : undefined}
-            title={card.tag}
-          >
-            <KanbanBadge className="max-w-full overflow-hidden">
-              <span className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                {card.tag}
-              </span>
-            </KanbanBadge>
-          </div>
-        </div>
-        <p className="text-muted-foreground text-xs leading-5">{card.summary}</p>
-      </div>
+      <KanbanCardHeader>
+        <KanbanCardTitle className="text-sm leading-normal">{card.label}</KanbanCardTitle>
+        <KanbanCardDescription className="text-xs leading-5">{card.summary}</KanbanCardDescription>
+      </KanbanCardHeader>
+      <KanbanCardContent>
+        <ul
+          aria-label={`Tags de ${card.label}`}
+          className="flex min-w-0 max-w-full flex-wrap gap-1.5"
+        >
+          {card.tags.map((tag) => (
+            <li
+              className="min-w-0 max-w-full"
+              data-long-tag={tag.length > 20 ? '' : undefined}
+              key={tag}
+              title={tag}
+            >
+              <KanbanBadge className="max-w-full overflow-hidden">
+                <span className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                  {tag}
+                </span>
+              </KanbanBadge>
+            </li>
+          ))}
+        </ul>
+      </KanbanCardContent>
+      <KanbanCardFooter className="justify-between gap-3 text-muted-foreground text-xs">
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <UserIcon aria-hidden="true" className="size-3.5 shrink-0" />
+          <span className="truncate">{card.assignee}</span>
+        </span>
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <CalendarIcon aria-hidden="true" className="size-3.5 shrink-0" />
+          <span className="truncate">{card.date}</span>
+        </span>
+      </KanbanCardFooter>
     </KanbanCard>
   )
 }
 
 type PersistenceExample = 'accept' | 'reject' | 'stale-cache'
 
-function InteractiveBoard({
+function InteractiveBoard() {
+  const [columns, setColumns] = useState(toolbarColumns)
+  const [columnAction, setColumnAction] = useState('Nenhuma ação executada')
+
+  return (
+    <div className="h-[560px] min-h-0 p-4">
+      <KanbanView
+        columns={columns}
+        getCardLabel={(card) => card.label}
+        getColumnActions={(column) =>
+          column.id === 'backlog'
+            ? {
+              onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
+              onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
+            }
+            : undefined
+        }
+        getKey={(card) => card.id}
+        mobileStageHint="Select a column to inspect its cards on small screens."
+        onMoveCard={(move) => {
+          setColumns((current) => moveCard(current, move))
+          return true
+        }}
+        renderCard={(card) => <ExampleCardView card={card} />}
+      />
+      <output className="sr-only" data-column-action="">
+        {columnAction}
+      </output>
+    </div>
+  )
+}
+
+function OrderingAcceptanceBoard({
   persistence = 'accept',
-  showRestore = true,
-}: Readonly<{ persistence?: PersistenceExample; showRestore?: boolean }>) {
+}: Readonly<{ persistence?: PersistenceExample }>) {
   const [columns, setColumns] = useState(orderingColumns)
   const [persistenceStatus, setPersistenceStatus] = useState('idle')
   const [columnAction, setColumnAction] = useState('Nenhuma ação executada')
 
-  const restoreOrder = () => {
-    setColumns(cloneColumns(orderingColumns))
-    setPersistenceStatus('idle')
-  }
-
   return (
-    <div
-      className="grid h-[560px] min-h-0 min-w-0 grid-rows-[auto_1fr] gap-2 p-4"
-      style={{ width: 480 }}
-    >
-      {showRestore ? (
-        <div className="flex justify-end">
-          <Button onClick={restoreOrder} size="sm" variant="secondary">
-            <RotateCcwIcon aria-hidden="true" />
-            Restore order
-          </Button>
-        </div>
-      ) : (
-        <output className="sr-only" data-persistence-status="">
-          {persistenceStatus}
-        </output>
-      )}
+    <div className="grid h-[560px] min-h-0 min-w-0 grid-rows-[1fr] p-4" style={{ width: 480 }}>
       <div className="min-h-0 min-w-0">
         <KanbanView
           columns={columns}
@@ -330,9 +363,9 @@ function InteractiveBoard({
           getColumnActions={(column) =>
             column.id === 'backlog'
               ? {
-                  onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
-                  onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
-                }
+                onAddCard: (columnId) => setColumnAction(`Adicionar em ${columnId}`),
+                onOpenSettings: (columnId) => setColumnAction(`Configurar ${columnId}`),
+              }
               : undefined
           }
           getKey={(card) => card.id}
@@ -362,6 +395,9 @@ function InteractiveBoard({
       </div>
       <output className="sr-only" data-column-action="">
         {columnAction}
+      </output>
+      <output className="sr-only" data-persistence-status="">
+        {persistenceStatus}
       </output>
     </div>
   )
@@ -575,6 +611,15 @@ function visibleCardLabels(canvasElement: HTMLElement): string[] {
   ).map((card) => card.getAttribute('aria-label') ?? '')
 }
 
+function visibleBoardColumns(canvasElement: HTMLElement) {
+  return Array.from(canvasElement.querySelectorAll<HTMLElement>('section[aria-labelledby]'))
+    .filter((column) => column.getClientRects().length > 0)
+    .map((column) => ({
+      cards: visibleCardLabels(column),
+      title: column.querySelector('h2')?.textContent,
+    }))
+}
+
 function draggableCard(canvasElement: HTMLElement, label: string): HTMLElement {
   const card = Array.from(
     canvasElement.querySelectorAll<HTMLElement>('[data-kanban-card-draggable]'),
@@ -598,9 +643,55 @@ const meta = {
 
 export default meta
 type Story = StoryObj
-type CardStory = StoryObj<{ loading?: boolean }>
 
 export const Board: Story = {
+  render: () => <InteractiveBoard />,
+}
+
+export const BoardPresentationAcceptance: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+
+    await expect(visibleBoardColumns(canvasElement)).toEqual([
+      {
+        cards: ['Mover card Define the public contract'],
+        title: 'Backlog',
+      },
+      {
+        cards: ['Mover card Validate keyboard drag'],
+        title: 'Todo',
+      },
+      {
+        cards: ['Mover card Document composition'],
+        title: 'In Progress',
+      },
+      {
+        cards: ['Mover card Persist card priority'],
+        title: 'In Review',
+      },
+      {
+        cards: ['Mover card Review release evidence'],
+        title: 'Done',
+      },
+    ])
+    await expect(canvas.queryByRole('button', { name: 'Restore order' })).toBeNull()
+    await expect(canvas.getByRole('button', { name: 'Configurar seção Backlog' })).toBeVisible()
+    await expect(
+      canvas.getByRole('button', { name: 'Adicionar item à seção Backlog' }),
+    ).toBeVisible()
+
+    const composedCards = Array.from(
+      canvasElement.querySelectorAll<HTMLElement>('[data-slot="card"]'),
+    ).filter((card) => card.getClientRects().length > 0)
+
+    await expect(composedCards).toHaveLength(5)
+    for (const card of composedCards) {
+      await expect(
+        Array.from(card.children).map((section) => section.getAttribute('data-slot')),
+      ).toEqual(['card-header', 'card-panel', 'card-footer'])
+    }
+  },
   render: () => <InteractiveBoard />,
 }
 
@@ -670,7 +761,7 @@ export const PointerOrderingAcceptance: Story = {
     await expect(scrollArea?.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
     await expect(window.getComputedStyle(horizontalScrollbar!).opacity).toBe('0')
     await expect(window.getComputedStyle(horizontalScrollbar!).transitionDelay).toBe('0s')
-    await expect(longTag.title).toBe(cards[0]!.tag)
+    await expect(longTag.title).toBe(cards[3]!.tags[3])
     await expect(card.getBoundingClientRect().width).toBeLessThanOrEqual(
       column.getBoundingClientRect().width,
     )
@@ -734,7 +825,7 @@ export const PointerOrderingAcceptance: Story = {
       expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual(prioritizedOrderingLabels),
     )
   },
-  render: () => <InteractiveBoard showRestore={false} />,
+  render: () => <OrderingAcceptanceBoard />,
 }
 
 export const StaleCacheAcceptance: Story = {
@@ -753,7 +844,7 @@ export const StaleCacheAcceptance: Story = {
     )
     await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual(prioritizedOrderingLabels)
   },
-  render: () => <InteractiveBoard persistence="stale-cache" showRestore={false} />,
+  render: () => <OrderingAcceptanceBoard persistence="stale-cache" />,
 }
 
 export const RollbackAcceptance: Story = {
@@ -772,28 +863,7 @@ export const RollbackAcceptance: Story = {
     )
     await expect(visibleCardLabels(canvasElement).slice(0, 5)).toEqual(initialOrderingLabels)
   },
-  render: () => <InteractiveBoard persistence="reject" showRestore={false} />,
-}
-
-export const Card: CardStory = {
-  args: {
-    loading: false,
-  },
-  argTypes: {
-    loading: {
-      control: 'boolean',
-      description: 'Substitui o conteúdo pelo card skeleton durante o carregamento.',
-    },
-  },
-  render: ({ loading = false }) => (
-    <div className="w-full max-w-sm p-4">
-      {loading ? (
-        <KanbanCardSkeleton label="Carregando card do board" />
-      ) : (
-        <ExampleCardView card={cards[0]!} />
-      )}
-    </div>
-  ),
+  render: () => <OrderingAcceptanceBoard persistence="reject" />,
 }
 
 export const ReadOnly: Story = {

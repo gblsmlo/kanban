@@ -104,6 +104,8 @@ COSS semantic tokens. The official
 ```tsx
 import {
   KanbanCard,
+  KanbanCardHeader,
+  KanbanCardTitle,
   KanbanView,
   type KanbanCardMove,
   type KanbanColumnData,
@@ -141,13 +143,22 @@ export function Board({
       onMoveCard={moveRecord}
       renderCard={(record) => (
         <KanbanCard>
-          <strong>{record.title}</strong>
+          <KanbanCardHeader>
+            <KanbanCardTitle className="text-sm">{record.title}</KanbanCardTitle>
+          </KanbanCardHeader>
         </KanbanCard>
       )}
     />
   );
 }
 ```
+
+`KanbanCard` preserves the COSS card composition without exposing the consumer
+to the underlying UI package. Render `KanbanCardHeader`, `KanbanCardContent`, and
+`KanbanCardFooter` directly under it as needed. Use the content for labels and
+other task data; reserve the footer for metadata such as assignee or date.
+Consumers may adjust typography on `KanbanCardTitle` or
+`KanbanCardDescription`, while the sections retain their spacing and structure.
 
 `getColumnActions` enables the settings and add controls independently for each
 column. The package renders accessible icon buttons and reports the logical
