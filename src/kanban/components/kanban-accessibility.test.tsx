@@ -187,6 +187,7 @@ describe('Kanban accessibility', () => {
     viewport.releasePointerCapture = () => undefined
 
     expect(scrollArea.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
+    expect(scrollArea.className).toContain('!delay-0')
     fireEvent.pointerOver(dragSurface)
     expect(scrollArea.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
 

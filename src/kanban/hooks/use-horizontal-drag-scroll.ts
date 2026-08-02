@@ -128,7 +128,7 @@ export function useHorizontalDragScroll() {
     viewport.addEventListener('pointerup', handlePointerEnd)
 
     return () => {
-      dragOriginRef.current = null
+      resetDrag()
       viewport.removeEventListener('click', handleClickCapture, true)
       viewport.removeEventListener('lostpointercapture', resetDrag)
       viewport.removeEventListener('pointercancel', handlePointerEnd)

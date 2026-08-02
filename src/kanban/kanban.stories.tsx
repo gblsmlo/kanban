@@ -516,6 +516,7 @@ export const Board: Story = {
     await userEvent.hover(viewport!)
     await expect(scrollArea?.getAttribute('data-kanban-horizontal-scrollbar')).toBe('hidden')
     await expect(window.getComputedStyle(horizontalScrollbar!).opacity).toBe('0')
+    await expect(window.getComputedStyle(horizontalScrollbar!).transitionDelay).toBe('0s')
 
     await expect(visibleCardLabels(canvasElement).slice(0, 3)).toEqual([
       'Mover card Define the public contract',

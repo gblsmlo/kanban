@@ -89,6 +89,7 @@ export function KanbanView<TCard>({
           <ScrollArea
             className={cn(
               'hidden min-h-0 flex-1 md:block',
+              '[&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!delay-0',
               showHorizontalScrollbar
                 ? '[&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!opacity-100'
                 : '[&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!pointer-events-none [&_[data-orientation=horizontal][data-slot=scroll-area-scrollbar]]:!opacity-0',
