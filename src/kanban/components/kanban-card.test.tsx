@@ -34,6 +34,23 @@ describe('KanbanCard', () => {
     expect(content.className).toContain('gap-3')
   })
 
+  test('contains intrinsically wide consumer content inside the card width', () => {
+    render(
+      <KanbanCard data-testid="card">
+        <span className="whitespace-nowrap">tag-with-an-extremely-long-unbroken-value</span>
+      </KanbanCard>,
+    )
+
+    const card = screen.getByTestId('card')
+    const content = screen.getByText('tag-with-an-extremely-long-unbroken-value').parentElement!
+
+    expect(card.className).toContain('min-w-0')
+    expect(card.className).toContain('max-w-full')
+    expect(card.className).toContain('overflow-hidden')
+    expect(content.className).toContain('min-w-0')
+    expect(content.className).toContain('max-w-full')
+  })
+
   test('allows composed card sections to remain direct children', () => {
     render(
       <KanbanCard renderContent={false}>

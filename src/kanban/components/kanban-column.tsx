@@ -28,7 +28,7 @@ function KanbanEmptyState({
   return (
     <div
       className={cn(
-        'rounded-md border border-dashed px-3 py-6 text-center text-muted-foreground text-sm',
+        'min-w-0 max-w-full rounded-md border border-dashed px-3 py-6 text-center text-muted-foreground text-sm',
         className,
       )}
     >
@@ -77,7 +77,11 @@ function KanbanColumnCards<TCard>({
   }
 
   if (!sortableCards || !getCardDragId) {
-    return column.cards.map((card) => <div key={getKey(card)}>{renderCard(card)}</div>)
+    return column.cards.map((card) => (
+      <div className="min-w-0 max-w-full" data-kanban-card-container="" key={getKey(card)}>
+        {renderCard(card)}
+      </div>
+    ))
   }
 
   return column.cards.map((card, index) => (
@@ -118,14 +122,17 @@ export function KanbanColumn<TCard>({
     <section
       aria-labelledby={titleId}
       className={cn(
-        'flex h-full min-h-0 flex-col rounded-lg bg-card/30 shadow-black/5 shadow-inner',
+        'flex h-full min-h-0 min-w-0 max-w-full flex-col rounded-lg bg-card/30 shadow-black/5 shadow-inner',
         className,
       )}
     >
       <KanbanColumnHeader column={column} titleId={titleId} />
 
       <ScrollArea className="min-h-0 flex-1" fill scrollbarGutter scrollFade>
-        <div ref={ref} className="grid h-full min-h-full content-start gap-2 px-2 pb-2">
+        <div
+          ref={ref}
+          className="grid h-full min-h-full min-w-0 max-w-full content-start gap-2 px-2 pb-2"
+        >
           <KanbanColumnCards
             column={column}
             emptyLabel={emptyLabel}

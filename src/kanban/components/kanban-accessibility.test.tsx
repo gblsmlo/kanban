@@ -4,6 +4,7 @@ import { DragDropProvider } from '@dnd-kit/react'
 await import('../../test/dom')
 
 const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react')
+const { KanbanCard } = await import('./kanban-card')
 const { KanbanColumn } = await import('./kanban-column')
 const { KanbanStageSelector } = await import('./kanban-stage-selector')
 const { KanbanView } = await import('./kanban-view')
@@ -35,6 +36,42 @@ describe('Kanban accessibility', () => {
     expect(new Set(headingIds).size).toBe(2)
     for (const heading of headings) {
       expect(heading.closest('section')?.getAttribute('aria-labelledby')).toBe(heading.id)
+    }
+  })
+
+  test('keeps read-only and sortable card containers shrinkable', async () => {
+    const column = {
+      cards: [{ id: 'card-1' }],
+      count: 1,
+      id: 'backlog',
+      title: 'Backlog',
+    }
+    const renderCard = () => (
+      <KanbanCard>
+        <span className="whitespace-nowrap">tag-with-an-extremely-long-unbroken-value</span>
+      </KanbanCard>
+    )
+
+    const { container } = render(
+      <DragDropProvider>
+        <KanbanColumn column={column} getKey={(card) => card.id} renderCard={renderCard} />
+        <KanbanColumn
+          column={column}
+          getCardDragId={(card) => `kanban-card:${card.id}`}
+          getKey={(card) => card.id}
+          renderCard={renderCard}
+          sortableCards
+        />
+      </DragDropProvider>,
+    )
+    await act(async () => undefined)
+
+    const cardContainers = container.querySelectorAll<HTMLElement>('[data-kanban-card-container]')
+
+    expect(cardContainers).toHaveLength(2)
+    for (const cardContainer of cardContainers) {
+      expect(cardContainer.className).toContain('min-w-0')
+      expect(cardContainer.className).toContain('max-w-full')
     }
   })
 

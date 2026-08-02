@@ -1,5 +1,7 @@
 # Conter tags longas dentro do card
 
+**Status:** implementado para cards arrastáveis e somente leitura, com exemplo na story `Card`.
+
 ## Contexto
 
 Uma tag cujo conteudo e maior que a largura de um card pode fazer o elemento
