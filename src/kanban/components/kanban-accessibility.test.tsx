@@ -18,13 +18,9 @@ Object.assign(window, { PointerEvent: TestPointerEvent })
 Object.assign(globalThis, { PointerEvent: TestPointerEvent })
 
 const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react')
-const {
-  KanbanCard,
-  KanbanCardCompactMetadata,
-  KanbanCardContent,
-  KanbanCardHeader,
-  KanbanCardTitle,
-} = await import('./kanban-card')
+const { KanbanCard, KanbanCardContent, KanbanCardHeader, KanbanCardTitle } = await import(
+  './kanban-card'
+)
 const { KanbanColumn } = await import('./kanban-column')
 const { KanbanStageSelector } = await import('./kanban-stage-selector')
 const { KanbanView } = await import('./kanban-view')
@@ -246,6 +242,7 @@ describe('Kanban accessibility', () => {
       title: 'Backlog',
     }
     let dragStarts = 0
+    const onTagClick = mock(() => undefined)
 
     render(
       <DragDropProvider
@@ -262,7 +259,14 @@ describe('Kanban accessibility', () => {
             <KanbanCard display="compact">
               <KanbanCardHeader>
                 <KanbanCardTitle>Card 1</KanbanCardTitle>
-                <KanbanCardCompactMetadata tags={['API']} />
+                <button
+                  aria-label="1 tag"
+                  data-kanban-card-action=""
+                  onClick={onTagClick}
+                  type="button"
+                >
+                  1
+                </button>
               </KanbanCardHeader>
             </KanbanCard>
           )}
@@ -279,6 +283,12 @@ describe('Kanban accessibility', () => {
     expect(tagMetadata.hasAttribute('aria-roledescription')).toBeFalse()
     expect(tagMetadata.hasAttribute('data-kanban-card-action')).toBeTrue()
     expect(dragStarts).toBe(0)
+
+    fireEvent.pointerDown(tagMetadata, { button: 0, isPrimary: true, pointerId: 1 })
+    await act(async () => undefined)
+    expect(dragStarts).toBe(0)
+    fireEvent.click(tagMetadata)
+    expect(onTagClick).toHaveBeenCalledTimes(1)
 
     draggable.focus()
     fireEvent.keyDown(draggable, { code: 'Space', key: ' ' })

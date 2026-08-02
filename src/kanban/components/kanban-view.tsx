@@ -46,7 +46,6 @@ export function KanbanView<TCard>({
     handleDragEnd,
     handleDragOver,
     handleDragStart,
-    reconciliationKey,
     visibleColumns,
   } = useKanbanDragAndDrop({ columns, getKey, onMoveCard })
   const { isDragging: isBoardDragging, rootRef } = useHorizontalDragScroll()
@@ -139,8 +138,6 @@ export function KanbanView<TCard>({
           >
             <div
               className="grid h-full min-h-full w-max auto-cols-[minmax(19rem,22rem)] grid-flow-col gap-2"
-              data-kanban-reconciliation-key={reconciliationKey}
-              key={reconciliationKey}
               ref={boardContentRef}
             >
               {visibleColumns.map((column) => (

@@ -1,6 +1,5 @@
 'use client'
 
-import { TagIcon } from 'lucide-react'
 import {
   createContext,
   type ComponentProps,
@@ -8,7 +7,6 @@ import {
   type ReactNode,
   useContext,
 } from 'react'
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardAction,
@@ -18,7 +16,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '../../lib/utils'
 
 export type KanbanCardDisplay = 'full' | 'compact'
@@ -35,15 +32,6 @@ export type KanbanCardDescriptionProps = ComponentProps<typeof CardDescription>
 export type KanbanCardFooterProps = ComponentProps<typeof CardFooter>
 export type KanbanCardHeaderProps = ComponentProps<typeof CardHeader>
 export type KanbanCardTitleProps = ComponentProps<typeof CardTitle>
-
-export interface KanbanCardCompactMetadataProps extends ComponentProps<'div'> {
-  date?: string
-  dateLabel?: string
-  emptyTagsLabel?: string
-  label?: string
-  tags: readonly string[]
-  tagsLabel?: string
-}
 
 const KanbanCardDisplayContext = createContext<KanbanCardDisplay>('full')
 
@@ -121,77 +109,4 @@ export function KanbanCardFooter(props: KanbanCardFooterProps): ReactElement {
   const display = useContext(KanbanCardDisplayContext)
 
   return <CardFooter {...props} hidden={display === 'compact' || props.hidden} />
-}
-
-export function KanbanCardCompactMetadata({
-  className,
-  date,
-  dateLabel = 'Date',
-  emptyTagsLabel = 'No tags',
-  hidden = false,
-  label,
-  tags,
-  tagsLabel = 'Tags',
-  ...props
-}: KanbanCardCompactMetadataProps): ReactElement {
-  const display = useContext(KanbanCardDisplayContext)
-  const tagCountLabel = `${tags.length} ${tags.length === 1 ? 'tag' : 'tags'}`
-  const accessibleLabel = label ?? tagCountLabel
-
-  if (display !== 'compact' || hidden) {
-    return (
-      <div
-        className={className}
-        data-compact-visible="false"
-        data-slot="kanban-card-compact-metadata"
-        hidden
-        {...props}
-      />
-    )
-  }
-
-  return (
-    <div
-      className={cn(
-        'inline-flex min-w-0 shrink items-center gap-2 text-muted-foreground text-xs',
-        className,
-      )}
-      data-compact-visible="true"
-      data-slot="kanban-card-compact-metadata"
-      {...props}
-    >
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              aria-label={accessibleLabel}
-              data-kanban-card-action=""
-              size="xs"
-              variant="ghost"
-            />
-          }
-        >
-          <TagIcon aria-hidden="true" />
-          <span aria-hidden="true">{tags.length}</span>
-        </TooltipTrigger>
-        <TooltipPopup>
-          <div className="grid max-w-64 gap-1.5">
-            <div>
-              <span className="font-medium">{tagsLabel}:</span>{' '}
-              {tags.length ? tags.join(', ') : emptyTagsLabel}
-            </div>
-          </div>
-        </TooltipPopup>
-      </Tooltip>
-      {date ? (
-        <span
-          className="inline-flex min-w-0 items-center gap-1"
-          data-slot="kanban-card-compact-date"
-        >
-          <span className="sr-only">{dateLabel}: </span>
-          <span className="truncate">{date}</span>
-        </span>
-      ) : null}
-    </div>
-  )
 }

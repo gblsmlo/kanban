@@ -29,7 +29,6 @@ export function useKanbanDragAndDrop<TCard>({
   onMoveCard,
 }: UseKanbanDragAndDropOptions<TCard>) {
   const [optimisticColumns, setOptimisticColumns] = useState<KanbanColumnData<TCard>[] | null>(null)
-  const [reconciliationKey, setReconciliationKey] = useState(0)
   const [focusCardDragId, setFocusCardDragId] = useState<string | null>(null)
   const columnsRef = useRef(columns)
   const optimisticColumnsRef = useRef<KanbanColumnData<TCard>[] | null>(null)
@@ -72,9 +71,6 @@ export function useKanbanDragAndDrop<TCard>({
     (event: DragOverEvent) => {
       const { source, target } = event.operation
 
-      // OptimisticSortingPlugin owns sortable-to-sortable previews without a
-      // React render. dnd-kit documents plain droppable columns as the extra
-      // state-managed case needed to enter an empty list.
       if (!onMoveCard || source?.data.type !== 'card' || target?.data.type !== 'column') {
         return
       }
@@ -108,11 +104,7 @@ export function useKanbanDragAndDrop<TCard>({
       }
 
       if (move.sourceColumnId !== move.targetColumnId) {
-        // OptimisticSortingPlugin physically reparents sortable elements across
-        // groups. Remount the shared board subtree when React takes ownership
-        // so it never tries to remove the card from its former DOM parent.
         setFocusCardDragId(String(event.operation.source?.id))
-        setReconciliationKey((current) => current + 1)
       }
       updateOptimisticColumns(projectedColumns)
       rollbackSourceColumnsRef.current = null
@@ -136,11 +128,6 @@ export function useKanbanDragAndDrop<TCard>({
           if (settleSuspension) suspension.abort()
           rollbackSourceColumnsRef.current = sourceColumns
           updateOptimisticColumns(cloneColumnOrder(sourceColumns))
-          // The optimistic plugin mutates DOM outside React and the suspended
-          // abort resets in a later microtask. Remount now and once after that
-          // reset so React's original order becomes authoritative again.
-          setReconciliationKey((current) => current + 1)
-          requestAnimationFrame(() => setReconciliationKey((current) => current + 1))
           return
         }
 
@@ -182,7 +169,6 @@ export function useKanbanDragAndDrop<TCard>({
     handleDragEnd,
     handleDragOver,
     handleDragStart,
-    reconciliationKey,
     visibleColumns: optimisticColumns ?? columns,
   }
 }

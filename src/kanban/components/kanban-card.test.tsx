@@ -6,7 +6,6 @@ const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@test
 const {
   KanbanCard,
   KanbanCardAction,
-  KanbanCardCompactMetadata,
   KanbanCardContent,
   KanbanCardDescription,
   KanbanCardFooter,
@@ -23,7 +22,6 @@ describe('KanbanCard', () => {
     const publicComponents = [
       'KanbanCard',
       'KanbanCardAction',
-      'KanbanCardCompactMetadata',
       'KanbanCardContent',
       'KanbanCardDescription',
       'KanbanCardFooter',
@@ -109,17 +107,15 @@ describe('KanbanCard', () => {
     expect(card.className).toContain('overflow-hidden')
   })
 
-  test('keeps full as the default display and exposes compact metadata only in compact mode', () => {
+  test('keeps full as the default display while consumers control compact content', () => {
     const { rerender } = render(
       <KanbanCard data-testid="card">
         <KanbanCardHeader>
           <KanbanCardTitle>Título</KanbanCardTitle>
           <KanbanCardDescription>Descrição detalhada</KanbanCardDescription>
-          <KanbanCardCompactMetadata
-            data-testid="compact-metadata"
-            date="Today"
-            tags={['API', 'A11y']}
-          />
+          <div data-compact-visible="false" data-testid="compact-metadata" hidden>
+            Consumer content
+          </div>
         </KanbanCardHeader>
         <KanbanCardContent>Conteúdo completo</KanbanCardContent>
         <KanbanCardFooter>Rodapé completo</KanbanCardFooter>
@@ -138,11 +134,9 @@ describe('KanbanCard', () => {
         <KanbanCardHeader>
           <KanbanCardTitle>Título</KanbanCardTitle>
           <KanbanCardDescription>Descrição detalhada</KanbanCardDescription>
-          <KanbanCardCompactMetadata
-            data-testid="compact-metadata"
-            date="Today"
-            tags={['API', 'A11y']}
-          />
+          <div data-compact-visible="true" data-testid="compact-metadata">
+            Consumer content
+          </div>
         </KanbanCardHeader>
         <KanbanCardContent>Conteúdo completo</KanbanCardContent>
         <KanbanCardFooter>Rodapé completo</KanbanCardFooter>
@@ -151,34 +145,7 @@ describe('KanbanCard', () => {
 
     expect(card.getAttribute('data-display')).toBe('compact')
     expect(compactMetadata.getAttribute('data-compact-visible')).toBe('true')
-    expect(compactMetadata.querySelector('[data-slot="tooltip-trigger"]')).toBeTruthy()
-    expect(screen.getByText('Today')).toBeTruthy()
-  })
-
-  test('keeps the compact date visible while exposing every tag through the tooltip', async () => {
-    render(
-      <KanbanCard display="compact">
-        <KanbanCardHeader>
-          <KanbanCardTitle>Título</KanbanCardTitle>
-          <KanbanCardCompactMetadata
-            date="This week"
-            tags={['State management', 'Optimistic interface']}
-          />
-        </KanbanCardHeader>
-      </KanbanCard>,
-    )
-
-    const metadata = screen.getByLabelText('2 tags')
-    await act(async () => {
-      metadata.focus()
-      fireEvent.focus(metadata)
-    })
-
-    await waitFor(() => expect(screen.getByRole('tooltip')).toBeTruthy())
-    expect(screen.getByRole('tooltip').textContent).toContain('State management')
-    expect(screen.getByRole('tooltip').textContent).toContain('Optimistic interface')
-    expect(screen.getByRole('tooltip').textContent).not.toContain('This week')
-    expect(screen.getByText('This week')).toBeTruthy()
+    expect(compactMetadata.textContent).toContain('Consumer content')
   })
 })
 

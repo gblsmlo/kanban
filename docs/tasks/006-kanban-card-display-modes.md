@@ -38,10 +38,14 @@ decidir como será persistida.
 - Em `compact`, manter título, tags e data na mesma linha e ocultar descrição,
   content e footer da apresentação e da árvore de acessibilidade.
 - Tratar o resumo de tags como ação secundária, preservando um ativador de drag
-  independente e o comportamento nativo dos sensores do dnd-kit.
-- Remontar a subtree compartilhada do board no handoff de movimentos entre
-  colunas populadas, impedindo que React remova um card que o plugin otimista do
-  DnD Kit já moveu para outro elemento pai.
+  independente e suprimindo pointer drag quando o gesto começa em um controle
+  marcado pelo consumer.
+- Manter o `OptimisticSortingPlugin` e os sensores oficiais do DnD Kit para
+  prévia, colisão, teclado e grupos. A reconciliação entre colunas não remonta
+  mais a subtree compartilhada; as chaves estáveis de colunas/cards preservam
+  as instâncias que não participaram do movimento.
+- O consumer continua sendo responsável por persistir a nova posição e por
+  renderizar o conteúdo do card movido.
 - Manter o estado e sua persistência sob responsabilidade do consumer.
 
 ## Critérios de aceite

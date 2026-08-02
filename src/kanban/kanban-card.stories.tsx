@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { TagIcon } from 'lucide-react'
 import { expect, waitFor, within } from 'storybook/test'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip'
 
 import {
   KanbanBadge,
   KanbanCard,
-  KanbanCardCompactMetadata,
   KanbanCardContent,
   KanbanCardDescription,
   type KanbanCardDisplay,
@@ -85,7 +87,7 @@ function ExampleCardView({
       <KanbanCardHeader>
         <KanbanCardTitle className="text-sm leading-normal">{card.label}</KanbanCardTitle>
         <KanbanCardDescription className="text-xs leading-5">{card.summary}</KanbanCardDescription>
-        <KanbanCardCompactMetadata date={card.date} tags={card.tags} />
+        <CompactMetadata display={display} date={card.date} tags={card.tags} />
       </KanbanCardHeader>
       <KanbanCardContent>
         <ul
@@ -112,6 +114,47 @@ function ExampleCardView({
         </span>
       </KanbanCardFooter>
     </KanbanCard>
+  )
+}
+
+function CompactMetadata({
+  date,
+  display,
+  tags,
+}: Readonly<{ date: string; display: KanbanCardDisplay; tags: readonly string[] }>) {
+  if (display !== 'compact') return null
+
+  return (
+    <div
+      className="inline-flex min-w-0 shrink items-center gap-2 text-muted-foreground text-xs"
+      data-compact-visible="true"
+      data-slot="consumer-compact-metadata"
+    >
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              aria-label={`${tags.length} ${tags.length === 1 ? 'tag' : 'tags'}`}
+              data-kanban-card-action=""
+              size="xs"
+              variant="ghost"
+            />
+          }
+        >
+          <TagIcon aria-hidden="true" />
+          <span aria-hidden="true">{tags.length}</span>
+        </TooltipTrigger>
+        <TooltipPopup>
+          <div>
+            <span className="font-medium">Tags:</span> {tags.join(', ')}
+          </div>
+        </TooltipPopup>
+      </Tooltip>
+      <span className="inline-flex min-w-0 items-center gap-1" data-slot="kanban-card-compact-date">
+        <span className="sr-only">Date: </span>
+        <span className="truncate">{date}</span>
+      </span>
+    </div>
   )
 }
 
