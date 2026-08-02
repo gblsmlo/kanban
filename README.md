@@ -17,6 +17,7 @@ remote state, mutations, navigation, and persistence.
 - read-only mode when `onMoveCard` is omitted
 - responsive desktop board and mobile stage selector
 - horizontal desktop scrolling by clicking, holding, and dragging the board
+- horizontal scrollbar visible only while that board-drag gesture is active
 - minimal drag motion with DnD Kit DragOverlay, feedback, and accessibility plugins
 - COSS-first visual primitives with no direct Base UI usage in the Kanban pattern
 

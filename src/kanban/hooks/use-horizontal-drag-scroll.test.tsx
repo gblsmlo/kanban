@@ -21,18 +21,22 @@ const { useHorizontalDragScroll } = await import('./use-horizontal-drag-scroll')
 
 afterEach(cleanup)
 
-function DragScrollSurface() {
+function DragScrollSurface({ enabled = true }: Readonly<{ enabled?: boolean }>) {
   const { isDragging, rootRef } = useHorizontalDragScroll()
 
   return (
-    <div data-dragging={String(isDragging)} data-testid="root" ref={rootRef}>
-      <div data-slot="scroll-area-viewport" data-testid="viewport">
-        <div data-testid="surface">Surface</div>
-        <div data-kanban-card-draggable="" data-testid="draggable-card">
-          Draggable card
+    <div data-dragging={String(isDragging)} data-testid="state">
+      {enabled ? (
+        <div data-testid="root" ref={rootRef}>
+          <div data-slot="scroll-area-viewport" data-testid="viewport">
+            <div data-testid="surface">Surface</div>
+            <div data-kanban-card-draggable="" data-testid="draggable-card">
+              Draggable card
+            </div>
+            <button type="button">Action</button>
+          </div>
         </div>
-        <button type="button">Action</button>
-      </div>
+      ) : null}
     </div>
   )
 }
@@ -72,7 +76,7 @@ describe('useHorizontalDragScroll', () => {
     })
 
     expect(viewport.scrollLeft).toBe(180)
-    expect(screen.getByTestId('root').getAttribute('data-dragging')).toBe('true')
+    expect(screen.getByTestId('state').getAttribute('data-dragging')).toBe('true')
 
     fireEvent.pointerUp(viewport, {
       clientX: 140,
@@ -80,7 +84,38 @@ describe('useHorizontalDragScroll', () => {
       pointerId: 1,
     })
 
-    expect(screen.getByTestId('root').getAttribute('data-dragging')).toBe('false')
+    expect(screen.getByTestId('state').getAttribute('data-dragging')).toBe('false')
+  })
+
+  test('clears an active drag when the root detaches', () => {
+    const { rerender } = render(<DragScrollSurface />)
+    const viewport = screen.getByTestId('viewport')
+    const surface = screen.getByTestId('surface')
+
+    Object.defineProperties(viewport, {
+      clientWidth: { configurable: true, value: 300 },
+      scrollLeft: { configurable: true, value: 120, writable: true },
+      scrollWidth: { configurable: true, value: 900 },
+    })
+    viewport.setPointerCapture = () => undefined
+
+    fireEvent.pointerDown(surface, {
+      button: 0,
+      clientX: 200,
+      clientY: 80,
+      isPrimary: true,
+      pointerId: 1,
+    })
+    fireEvent.pointerMove(viewport, {
+      clientX: 140,
+      clientY: 82,
+      pointerId: 1,
+    })
+    expect(screen.getByTestId('state').getAttribute('data-dragging')).toBe('true')
+
+    rerender(<DragScrollSurface enabled={false} />)
+
+    expect(screen.getByTestId('state').getAttribute('data-dragging')).toBe('false')
   })
 
   test('keeps vertical gestures and interactive targets out of board scrolling', () => {

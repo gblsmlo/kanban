@@ -1,5 +1,7 @@
 # Barra de rolagem horizontal apenas durante arraste
 
+**Status:** implementado e coberto por teste de integração do gesto no board.
+
 ## Contexto
 
 No desktop, a barra de rolagem horizontal do quadro pode ficar visivel sem que
