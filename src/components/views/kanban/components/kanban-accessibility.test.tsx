@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { DragDropProvider } from '@dnd-kit/react'
 
-await import('../../test/dom')
+await import('../../../../test/dom')
 
 class TestPointerEvent extends window.MouseEvent {
   isPrimary: boolean

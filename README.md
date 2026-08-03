@@ -2,7 +2,7 @@
 
 A domain-neutral collection view package for React applications built with
 [COSS](https://github.com/cosscom/coss) primitives, DnD Kit, and Tailwind CSS.
-Version `0.4.0` publishes the package as `@tc96/collection-views`. The
+Version `0.4.1` publishes the package as `@tc96/collection-views`. The
 repository remains named `kanban` for now, and the existing `Kanban*` component
 names remain available alongside `List*` components.
 
@@ -45,6 +45,10 @@ The views compose the canonical COSS `Badge`, `Button`, `Card`, `Collapsible`,
 The npm build bundles their copy-owned source. The source registry instead
 declares the matching `@coss/*` items, installing them at
 `@/components/ui/*` through the consumer's `ui` alias.
+
+The source layout separates primitive UI from view surfaces: shared primitives
+live under `src/components/ui`, while collection orchestration and the Kanban
+and List views live under `src/components/views`.
 
 ## Installation
 

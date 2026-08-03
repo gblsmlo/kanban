@@ -1,3 +1,3 @@
 export * from './collection'
-export * from './kanban'
-export * from './list'
+export * from './components/views/kanban'
+export * from './components/views/list'

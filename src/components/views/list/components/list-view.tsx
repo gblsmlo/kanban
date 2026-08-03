@@ -2,12 +2,12 @@
 
 import { type ReactNode, useMemo, useState } from 'react'
 
-import { projectCollection } from '../../collection/lib/project-collection'
+import { projectCollection } from '../../../../collection/lib/project-collection'
 import type {
   CollectionDefinition,
   CollectionGroup,
   CollectionGrouping,
-} from '../../collection/types'
+} from '../../../../collection/types'
 import { ListGroup, type ListGroupActions } from './list-group'
 
 export interface ListViewProps<TItem> {

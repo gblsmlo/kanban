@@ -4,7 +4,7 @@ import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/react
 import { createCardDragId, createColumnDropId } from '../lib/drag-and-drop'
 import type { KanbanColumnData } from '../types'
 
-await import('../../test/dom')
+await import('../../../../test/dom')
 
 const { act, cleanup, renderHook } = await import('@testing-library/react')
 const { useKanbanDragAndDrop } = await import('./use-kanban-drag-and-drop')
@@ -219,7 +219,7 @@ describe('useKanbanDragAndDrop', () => {
     expect(result.current.focusCardDragId).toBeNull()
   })
 
-  test('leaves sortable card drag-over previews to the DnD Kit plugin', () => {
+  test('projects sortable card drag-over previews through React-owned columns', () => {
     const events = createDragEvents({
       currentIndex: 0,
       initialIndex: 1,
@@ -241,7 +241,42 @@ describe('useKanbanDragAndDrop', () => {
     act(() => result.current.handleDragStart(events.start))
     act(() => result.current.handleDragOver(events.over))
 
-    expect(result.current.visibleColumns).toBe(initialColumns)
+    expect(ids(result.current.visibleColumns)).toEqual(['card-2', 'card-1', 'card-3'])
+  })
+
+  test('does not apply a sortable projection twice on drop', () => {
+    const events = createDragEvents({
+      currentIndex: 0,
+      initialIndex: 1,
+      sourceId: createCardDragId('card-2'),
+      target: {
+        columnId: 'backlog',
+        id: createCardDragId('card-1'),
+        type: 'card',
+      },
+    })
+    const onMoveCard = mock(() => true)
+    const { result } = renderHook(() =>
+      useKanbanDragAndDrop({
+        columns: initialColumns,
+        getKey: (card: CardFixture) => card.id,
+        onMoveCard,
+      }),
+    )
+
+    act(() => result.current.handleDragStart(events.start))
+    act(() => result.current.handleDragOver(events.over))
+    act(() => result.current.handleDragEnd(events.end))
+
+    expect(onMoveCard).toHaveBeenCalledWith({
+      card: { id: 'card-2' },
+      cardId: 'card-2',
+      sourceColumnId: 'backlog',
+      sourceIndex: 1,
+      targetColumnId: 'backlog',
+      targetIndex: 0,
+    })
+    expect(ids(result.current.visibleColumns)).toEqual(['card-2', 'card-1', 'card-3'])
   })
 
   test('uses a React projection only while entering an empty column', () => {

@@ -9,7 +9,10 @@ const config: StorybookConfig = {
     name: '@storybook/react-vite',
     options: {},
   },
-  stories: ['../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  stories: [
+    '../src/components/views/kanban/**/*.stories.@(js|jsx|mjs|ts|tsx)',
+    '../src/components/views/list/**/*.stories.@(js|jsx|mjs|ts|tsx)',
+  ],
   viteFinal: async (viteConfig) =>
     mergeConfig(viteConfig, {
       optimizeDeps: {

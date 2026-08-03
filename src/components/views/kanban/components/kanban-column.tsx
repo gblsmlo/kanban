@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '../../lib/utils'
+import { cn } from '../../../../lib/utils'
 
 import { createColumnDropId } from '../lib/drag-and-drop'
 import type { KanbanColumnActions, KanbanColumnData } from '../types'

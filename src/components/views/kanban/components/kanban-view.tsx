@@ -2,7 +2,7 @@ import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import type { ReactNode } from 'react'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '../../lib/utils'
+import { cn } from '../../../../lib/utils'
 
 import { useActiveColumnId } from '../hooks/use-active-column-id'
 import { useHorizontalDragScroll } from '../hooks/use-horizontal-drag-scroll'

@@ -1,9 +1,10 @@
 import { pointerIntersection } from '@dnd-kit/collision'
 import { KeyboardSensor, PointerSensor } from '@dnd-kit/dom'
+import { OptimisticSortingPlugin } from '@dnd-kit/dom/sortable'
 import { useSortable } from '@dnd-kit/react/sortable'
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 import { useCallback, useLayoutEffect, useRef } from 'react'
-import { cn } from '../../lib/utils'
+import { cn } from '../../../../lib/utils'
 
 const ACTIONABLE_DESCENDANT_SELECTOR = [
   'a[href]:not([data-kanban-card-action])',
@@ -49,6 +50,10 @@ export function SortableKanbanCard({
     group: columnId,
     id,
     index,
+    // React owns the column/card tree. The default optimistic plugin moves the
+    // active DOM node between column parents, which races React's reconciliation
+    // when the consumer persists the move on drag end.
+    plugins: (defaults) => defaults.filter((plugin) => plugin !== OptimisticSortingPlugin),
     sensors: KANBAN_CARD_SENSORS,
     transition: null,
     type: 'kanban-card',

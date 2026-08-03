@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ReactElement } from 'react'
 
-import { cn } from '../../lib/utils'
+import { cn } from '../../../../lib/utils'
 
 export interface ListItemProps extends ComponentPropsWithoutRef<'article'> {
   interactive?: boolean

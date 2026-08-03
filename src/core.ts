@@ -16,10 +16,10 @@ export {
   parseColumnId,
   projectKanbanColumns,
   resolveKanbanCardMove,
-} from './kanban/lib/drag-and-drop'
+} from './components/views/kanban/lib/drag-and-drop'
 export type {
   KanbanCardMove,
   KanbanColumnActions,
   KanbanColumnData,
   KanbanStageOption,
-} from './kanban/types'
+} from './components/views/kanban/types'

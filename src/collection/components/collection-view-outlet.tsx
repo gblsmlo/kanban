@@ -2,9 +2,12 @@
 
 import { type ReactNode, useMemo } from 'react'
 
-import { KanbanView, type KanbanViewProps } from '../../kanban/components/kanban-view'
-import type { KanbanColumnData } from '../../kanban/types'
-import { ListView, type ListViewProps } from '../../list/components/list-view'
+import {
+  KanbanView,
+  type KanbanViewProps,
+} from '../../components/views/kanban/components/kanban-view'
+import type { KanbanColumnData } from '../../components/views/kanban/types'
+import { ListView, type ListViewProps } from '../../components/views/list/components/list-view'
 import { projectCollection } from '../lib/project-collection'
 import type { CollectionDefinition } from '../types'
 import { useCollectionPreferences } from './collection-provider'

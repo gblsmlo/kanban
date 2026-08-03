@@ -62,94 +62,94 @@
           "target": "@components/patterns/collection-views/collection/types.ts"
         },
         {
-          "path": "src/kanban/components/kanban-badge.tsx",
+          "path": "src/components/views/kanban/components/kanban-badge.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/kanban/components/kanban-badge.tsx"
+          "target": "@components/patterns/collection-views/components/views/kanban/components/kanban-badge.tsx"
         },
         {
-          "path": "src/kanban/components/kanban-card.tsx",
+          "path": "src/components/views/kanban/components/kanban-card.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/kanban/components/kanban-card.tsx"
+          "target": "@components/patterns/collection-views/components/views/kanban/components/kanban-card.tsx"
         },
         {
-          "path": "src/kanban/components/kanban-card-skeleton.tsx",
+          "path": "src/components/views/kanban/components/kanban-card-skeleton.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/kanban/components/kanban-card-skeleton.tsx"
+          "target": "@components/patterns/collection-views/components/views/kanban/components/kanban-card-skeleton.tsx"
         },
         {
-          "path": "src/kanban/components/kanban-column.tsx",
+          "path": "src/components/views/kanban/components/kanban-column.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/kanban/components/kanban-column.tsx"
+          "target": "@components/patterns/collection-views/components/views/kanban/components/kanban-column.tsx"
         },
         {
-          "path": "src/kanban/components/kanban-stage-selector.tsx",
+          "path": "src/components/views/kanban/components/kanban-stage-selector.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/kanban/components/kanban-stage-selector.tsx"
+          "target": "@components/patterns/collection-views/components/views/kanban/components/kanban-stage-selector.tsx"
         },
         {
-          "path": "src/kanban/components/kanban-view.tsx",
+          "path": "src/components/views/kanban/components/kanban-view.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/kanban/components/kanban-view.tsx"
+          "target": "@components/patterns/collection-views/components/views/kanban/components/kanban-view.tsx"
         },
         {
-          "path": "src/kanban/components/sortable-kanban-card.tsx",
+          "path": "src/components/views/kanban/components/sortable-kanban-card.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/kanban/components/sortable-kanban-card.tsx"
+          "target": "@components/patterns/collection-views/components/views/kanban/components/sortable-kanban-card.tsx"
         },
         {
-          "path": "src/kanban/hooks/use-active-column-id.ts",
+          "path": "src/components/views/kanban/hooks/use-active-column-id.ts",
           "type": "registry:hook",
-          "target": "@components/patterns/collection-views/kanban/hooks/use-active-column-id.ts"
+          "target": "@components/patterns/collection-views/components/views/kanban/hooks/use-active-column-id.ts"
         },
         {
-          "path": "src/kanban/hooks/use-horizontal-drag-scroll.ts",
+          "path": "src/components/views/kanban/hooks/use-horizontal-drag-scroll.ts",
           "type": "registry:hook",
-          "target": "@components/patterns/collection-views/kanban/hooks/use-horizontal-drag-scroll.ts"
+          "target": "@components/patterns/collection-views/components/views/kanban/hooks/use-horizontal-drag-scroll.ts"
         },
         {
-          "path": "src/kanban/hooks/use-kanban-drag-and-drop.ts",
+          "path": "src/components/views/kanban/hooks/use-kanban-drag-and-drop.ts",
           "type": "registry:hook",
-          "target": "@components/patterns/collection-views/kanban/hooks/use-kanban-drag-and-drop.ts"
+          "target": "@components/patterns/collection-views/components/views/kanban/hooks/use-kanban-drag-and-drop.ts"
         },
         {
-          "path": "src/kanban/index.ts",
+          "path": "src/components/views/kanban/index.ts",
           "type": "registry:component",
-          "target": "@components/patterns/collection-views/kanban/index.ts"
+          "target": "@components/patterns/collection-views/components/views/kanban/index.ts"
         },
         {
-          "path": "src/kanban/lib/drag-and-drop.ts",
+          "path": "src/components/views/kanban/lib/drag-and-drop.ts",
           "type": "registry:lib",
-          "target": "@components/patterns/collection-views/kanban/lib/drag-and-drop.ts"
+          "target": "@components/patterns/collection-views/components/views/kanban/lib/drag-and-drop.ts"
         },
         {
-          "path": "src/kanban/types.ts",
+          "path": "src/components/views/kanban/types.ts",
           "type": "registry:lib",
-          "target": "@components/patterns/collection-views/kanban/types.ts"
+          "target": "@components/patterns/collection-views/components/views/kanban/types.ts"
         },
         {
-          "path": "src/list/components/list-group.tsx",
+          "path": "src/components/views/list/components/list-group.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/list/components/list-group.tsx"
+          "target": "@components/patterns/collection-views/components/views/list/components/list-group.tsx"
         },
         {
-          "path": "src/list/components/list-item.tsx",
+          "path": "src/components/views/list/components/list-item.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/list/components/list-item.tsx"
+          "target": "@components/patterns/collection-views/components/views/list/components/list-item.tsx"
         },
         {
-          "path": "src/list/components/list-item-skeleton.tsx",
+          "path": "src/components/views/list/components/list-item-skeleton.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/list/components/list-item-skeleton.tsx"
+          "target": "@components/patterns/collection-views/components/views/list/components/list-item-skeleton.tsx"
         },
         {
-          "path": "src/list/components/list-view.tsx",
+          "path": "src/components/views/list/components/list-view.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/list/components/list-view.tsx"
+          "target": "@components/patterns/collection-views/components/views/list/components/list-view.tsx"
         },
         {
-          "path": "src/list/index.ts",
+          "path": "src/components/views/list/index.ts",
           "type": "registry:component",
-          "target": "@components/patterns/collection-views/list/index.ts"
+          "target": "@components/patterns/collection-views/components/views/list/index.ts"
         },
         {
           "path": "src/lib/utils.ts",
