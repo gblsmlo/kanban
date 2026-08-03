@@ -38,8 +38,12 @@ describe('Kanban registry', () => {
       '@coss/badge',
       '@coss/button',
       '@coss/card',
+      '@coss/collapsible',
+      '@coss/empty',
+      '@coss/menu',
       '@coss/scroll-area',
       '@coss/skeleton',
+      '@coss/toolbar',
       '@coss/tooltip',
     ]
 
@@ -53,8 +57,12 @@ describe('Kanban registry', () => {
     const copiedPrimitivePaths = [
       'src/components/badge.tsx',
       'src/components/card.tsx',
+      'src/components/collapsible.tsx',
+      'src/components/empty.tsx',
+      'src/components/menu.tsx',
       'src/components/scroll-area.tsx',
       'src/components/text.tsx',
+      'src/components/toolbar.tsx',
     ]
 
     for (const path of copiedPrimitivePaths) {
@@ -123,12 +131,64 @@ describe('Kanban registry', () => {
     expect(card?.content).not.toContain('KanbanCardCompactMetadata')
   })
 
-  test('keeps direct Base UI imports inside the COSS ui source boundary', () => {
-    const kanbanSources = findSourceFiles('src/kanban').filter(
-      (path) => /\.[jt]sx?$/.test(path) && !path.includes('.test.'),
+  test('ships collection and List APIs through the same registry item', () => {
+    const publicApi = distributedItem.files.find((file) => file.path === 'src/index.ts')
+    const collectionApi = distributedItem.files.find(
+      (file) => file.path === 'src/collection/index.ts',
+    )
+    const collectionSettings = distributedItem.files.find(
+      (file) => file.path === 'src/collection/components/collection-settings-menu.tsx',
+    )
+    const collectionViewOutlet = distributedItem.files.find(
+      (file) => file.path === 'src/collection/components/collection-view-outlet.tsx',
+    )
+    const listApi = distributedItem.files.find((file) => file.path === 'src/list/index.ts')
+    const listView = distributedItem.files.find(
+      (file) => file.path === 'src/list/components/list-view.tsx',
+    )
+    const listGroup = distributedItem.files.find(
+      (file) => file.path === 'src/list/components/list-group.tsx',
+    )
+    const listItem = distributedItem.files.find(
+      (file) => file.path === 'src/list/components/list-item.tsx',
     )
 
-    for (const path of kanbanSources) {
+    expect(publicApi?.content).toContain("export * from './collection'")
+    expect(publicApi?.content).toContain("export * from './list'")
+    expect(collectionApi?.content).toContain('CollectionProvider')
+    expect(collectionApi?.content).toContain('CollectionSettingsMenu')
+    expect(collectionApi?.content).toContain('CollectionViewOutlet')
+    expect(collectionSettings?.content).toContain(
+      "setPreferences((current) => ({ ...current, view }), 'view')",
+    )
+    expect(collectionSettings?.content).toContain(
+      "setPreferences((current) => ({ ...current, groupBy }), 'grouping')",
+    )
+    expect(collectionSettings?.content).toContain("grid: 'Grid'")
+    expect(collectionSettings?.content).toContain("groupingBy: 'Grouping by'")
+    expect(collectionSettings?.content).not.toContain('MenuGroupLabel')
+    expect(collectionSettings?.content).not.toContain('Display as')
+    expect(collectionViewOutlet?.content).toContain('projectCollection(collection')
+    expect(collectionViewOutlet?.content).toContain('<KanbanView')
+    expect(collectionViewOutlet?.content).toContain('<ListView')
+    expect(listApi?.content).toContain('ListView')
+    expect(listApi?.content).toContain('ListItemSkeleton')
+    expect(listView?.content).toContain('collection: CollectionDefinition<TItem>')
+    expect(listView?.content).toContain('grouping: CollectionGrouping')
+    expect(listGroup?.content).toContain("from '@/components/ui/collapsible'")
+    expect(listGroup?.content).toContain("from '@/components/ui/button'")
+    expect(listItem?.content).toContain('data-slot="list-item"')
+    expect(listItem?.content).not.toContain("from '@/components/ui/card'")
+  })
+
+  test('keeps direct Base UI imports inside the COSS ui source boundary', () => {
+    const patternSources = ['src/collection', 'src/kanban', 'src/list'].flatMap((directory) =>
+      findSourceFiles(directory).filter(
+        (path) => /\.[jt]sx?$/.test(path) && !path.includes('.test.'),
+      ),
+    )
+
+    for (const path of patternSources) {
       expect(readFileSync(path, 'utf8')).not.toContain("from '@base-ui/react")
     }
   })

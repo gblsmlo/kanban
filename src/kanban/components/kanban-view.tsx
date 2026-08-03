@@ -47,7 +47,7 @@ export function KanbanView<TCard>({
     handleDragOver,
     handleDragStart,
     visibleColumns,
-  } = useKanbanDragAndDrop({ columns, getKey, onMoveCard })
+  } = useKanbanDragAndDrop({ columns, getKey, ...(onMoveCard ? { onMoveCard } : {}) })
   const { isDragging: isBoardDragging, rootRef } = useHorizontalDragScroll()
   const boardContentRef = useRef<HTMLDivElement | null>(null)
   const stageOptions = useMemo(() => createStageOptions(columns), [columns])
@@ -65,14 +65,18 @@ export function KanbanView<TCard>({
     [activeColumnId, visibleColumns],
   )
   const columnProps = {
-    emptyLabel: emptyColumnLabel,
-    getCardLabel,
     getCardDragId,
     getKey,
     renderCard,
     sortableCards: cardDragEnabled,
+    ...(emptyColumnLabel ? { emptyLabel: emptyColumnLabel } : {}),
+    ...(getCardLabel ? { getCardLabel } : {}),
   }
   const showHorizontalScrollbar = cardDragEnabled && isBoardDragging
+  const getColumnActionProps = (column: KanbanColumnData<TCard>) => {
+    const actions = getColumnActions?.(column)
+    return actions ? { actions } : {}
+  }
 
   useLayoutEffect(() => {
     if (!focusCardDragId) return
@@ -80,7 +84,7 @@ export function KanbanView<TCard>({
     const frame = requestAnimationFrame(() => {
       const card = Array.from(
         boardContentRef.current?.querySelectorAll<HTMLElement>('[data-kanban-card-drag-id]') ?? [],
-      ).find((element) => element.dataset.kanbanCardDragId === focusCardDragId)
+      ).find((element) => element.getAttribute('data-kanban-card-drag-id') === focusCardDragId)
 
       if (!card) return
       card.focus({ preventScroll: true })
@@ -100,19 +104,19 @@ export function KanbanView<TCard>({
       >
         <div className="flex h-full min-h-0 flex-col gap-2">
           <KanbanStageSelector
-            hint={mobileStageHint}
             onValueChange={setActiveColumnId}
             stages={stageOptions}
             value={activeColumnId}
+            {...(mobileStageHint ? { hint: mobileStageHint } : {})}
           />
 
           <div className="grid min-h-0 flex-1 gap-2 md:hidden">
             {activeColumn ? (
               <KanbanColumn
-                actions={getColumnActions?.(activeColumn)}
                 column={activeColumn}
                 {...columnProps}
                 sortableCards={false}
+                {...getColumnActionProps(activeColumn)}
               />
             ) : null}
           </div>
@@ -142,10 +146,10 @@ export function KanbanView<TCard>({
             >
               {visibleColumns.map((column) => (
                 <KanbanColumn
-                  actions={getColumnActions?.(column)}
                   column={column}
                   key={column.id}
                   {...columnProps}
+                  {...getColumnActionProps(column)}
                 />
               ))}
             </div>

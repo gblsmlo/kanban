@@ -13,7 +13,12 @@ const config: StorybookConfig = {
   viteFinal: async (viteConfig) =>
     mergeConfig(viteConfig, {
       optimizeDeps: {
-        include: ['@base-ui/react/menu', '@base-ui/react/tooltip'],
+        include: [
+          '@base-ui/react/avatar',
+          '@base-ui/react/collapsible',
+          '@base-ui/react/menu',
+          '@base-ui/react/tooltip',
+        ],
       },
       plugins: [tailwindcss()],
       resolve: {

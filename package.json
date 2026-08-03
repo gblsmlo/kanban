@@ -57,6 +57,7 @@
     "storybook": "storybook dev -p 6007 --no-open",
     "storybook:build": "storybook build",
     "test": "bun test",
+    "test:types": "tsc -p tsconfig.type-tests.json",
     "test:storybook": "vitest run --project storybook",
     "toolchain:check": "sh scripts/check-toolchain.sh",
     "typecheck": "tsc -p tsconfig.json"

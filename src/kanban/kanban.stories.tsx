@@ -3,6 +3,7 @@ import {
   ArrowUpDownIcon,
   BellIcon,
   CalendarIcon,
+  ChevronRightIcon,
   CircleDotIcon,
   Columns3Icon,
   ExpandIcon,
@@ -23,6 +24,7 @@ import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test'
 import { useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Menu,
   MenuCheckboxItem,
@@ -40,6 +42,21 @@ import {
 } from '@/components/ui/menu'
 import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip'
 import { Toolbar as CossToolbar, ToolbarButton, ToolbarGroup } from '@/components/ui/toolbar'
+import {
+  CollectionProvider,
+  CollectionSettingsMenu,
+  type CollectionDefinition,
+  CollectionViewOutlet,
+  useCollectionPreferences,
+} from '../collection'
+import {
+  ListItem,
+  ListItemContent,
+  ListItemDescription,
+  ListItemFooter,
+  ListItemHeader,
+  ListItemTitle,
+} from '../list'
 import {
   KanbanBadge,
   KanbanCard,
@@ -338,6 +355,42 @@ const toolbarFilterColumns: KanbanColumnData<ExampleCard>[] = [
     title: 'Done',
   },
 ]
+
+interface CollectionExampleCard extends ExampleCard {
+  statusId: string
+}
+
+function toCollectionCards(
+  columns: readonly KanbanColumnData<ExampleCard>[],
+): CollectionExampleCard[] {
+  return columns.flatMap((column) => column.cards.map((card) => ({ ...card, statusId: column.id })))
+}
+
+const collectionStatuses = toolbarFilterColumns.map((column) => ({
+  icon: <CircleDotIcon aria-hidden="true" />,
+  id: column.id,
+  label: column.title,
+}))
+
+const collectionAssignees = ['Ana', 'Bruno', 'Casey', 'Dana'].map((assignee) => ({
+  icon: <UserIcon aria-hidden="true" />,
+  id: assignee.toLowerCase(),
+  label: assignee,
+}))
+
+function createExampleCollection(
+  items: readonly CollectionExampleCard[],
+): CollectionDefinition<CollectionExampleCard> {
+  return {
+    assignees: collectionAssignees,
+    getAssigneeId: (item) => item.assignee.toLowerCase(),
+    getKey: (item) => item.id,
+    getLabel: (item) => item.label,
+    getStatusId: (item) => item.statusId,
+    items,
+    statuses: collectionStatuses,
+  }
+}
 
 type BoardFilterKey = 'assignee' | 'creator' | 'date' | 'labels' | 'priority' | 'status'
 type BoardFilters = Record<BoardFilterKey, string[]>
@@ -721,6 +774,7 @@ function SettingsMenu({
   onDisplayChange: (display: KanbanCardDisplay) => void
 }>) {
   const [columnWidth, setColumnWidth] = useState('standard')
+  const [grouping, setGrouping] = useState('status')
   const [swimlane, setSwimlane] = useState('none')
   const [expandedColumnIds, setExpandedColumnIds] = useState(() =>
     toolbarFilterColumns.map((column) => column.id),
@@ -755,6 +809,25 @@ function SettingsMenu({
             <BellIcon aria-hidden="true" />
             Notifications
           </MenuItem>
+        </MenuGroup>
+        <MenuSeparator />
+        <MenuGroup>
+          <MenuGroupLabel>Grouping</MenuGroupLabel>
+          <MenuSub>
+            <MenuSubTrigger>
+              <Rows2Icon aria-hidden="true" />
+              Group by
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              <MenuGroup>
+                <MenuGroupLabel>Primary grouping</MenuGroupLabel>
+                <MenuRadioGroup onValueChange={setGrouping} value={grouping}>
+                  <MenuRadioItem value="status">Status</MenuRadioItem>
+                  <MenuRadioItem value="assignee">Assignee</MenuRadioItem>
+                </MenuRadioGroup>
+              </MenuGroup>
+            </MenuSubPopup>
+          </MenuSub>
         </MenuGroup>
         <MenuSeparator />
         <MenuGroup>
@@ -908,6 +981,118 @@ function ToolbarBoard() {
   )
 }
 
+function CollectionViewListItem({ card }: Readonly<{ card: CollectionExampleCard }>) {
+  return (
+    <ListItem aria-label={card.label}>
+      <ListItemHeader>
+        <ListItemDescription>{card.id.toUpperCase()}</ListItemDescription>
+        <CircleDotIcon aria-hidden="true" className="size-4 shrink-0" />
+        <ListItemTitle>{card.label}</ListItemTitle>
+        <ListItemContent>
+          <ChevronRightIcon aria-hidden="true" className="size-4 shrink-0" />
+          <span className="truncate">{card.summary}</span>
+        </ListItemContent>
+      </ListItemHeader>
+      <ListItemFooter>
+        <Badge variant="outline">{card.labels[0]}</Badge>
+        <span>{card.assignee}</span>
+        <span>{card.date}</span>
+      </ListItemFooter>
+    </ListItem>
+  )
+}
+
+function CollectionViewsSurface({
+  collection,
+  filters,
+  onClearFilters,
+  onToggleFilter,
+}: Readonly<{
+  collection: CollectionDefinition<CollectionExampleCard>
+  filters: BoardFilters
+  onClearFilters: () => void
+  onToggleFilter: (key: BoardFilterKey, value: string) => void
+}>) {
+  const { preferences } = useCollectionPreferences()
+
+  return (
+    <div className="grid h-[640px] min-h-0 min-w-0 grid-rows-[auto_1fr] gap-3 p-4">
+      <CossToolbar aria-label="Collection toolbar">
+        <ToolbarGroup aria-label="View context" data-toolbar-side="left">
+          <div className="min-w-0 px-1">
+            <h1 className="truncate font-semibold text-sm">Product delivery</h1>
+            <p className="text-muted-foreground text-xs">
+              {preferences.view === 'kanban' ? 'Grid' : 'List'} · Grouped by{' '}
+              {preferences.groupBy === 'status' ? 'Status' : 'Assignee'}
+            </p>
+          </div>
+        </ToolbarGroup>
+
+        <div aria-hidden="true" className="flex-1" />
+
+        <ToolbarGroup aria-label="View actions" data-toolbar-side="right">
+          <FilterMenu filters={filters} onClear={onClearFilters} onToggle={onToggleFilter} />
+          <CollectionSettingsMenu />
+        </ToolbarGroup>
+      </CossToolbar>
+
+      <div
+        className="min-h-0 min-w-0"
+        data-collection-grouping={preferences.groupBy}
+        data-collection-view={preferences.view}
+      >
+        <CollectionViewOutlet
+          collection={collection}
+          kanban={{
+            getColumnActions: (column) => ({
+              addLabel: `Add item to ${column.title}`,
+              onAddCard: () => undefined,
+              onOpenSettings: () => undefined,
+              settingsLabel: `Configure ${column.title}`,
+            }),
+            mobileStageHint: 'Select a group.',
+          }}
+          list={{
+            getGroupActions: (group) => ({
+              addLabel: `Add item to ${group.label}`,
+              onAddItem: () => undefined,
+            }),
+          }}
+          renderKanbanItem={(card) => <ExampleCardView card={card} />}
+          renderListItem={(card) => <CollectionViewListItem card={card} />}
+        />
+      </div>
+    </div>
+  )
+}
+
+function CollectionViewsStory() {
+  const [filters, setFilters] = useState(emptyBoardFilters)
+  const filteredCards = useMemo(
+    () => toCollectionCards(filterBoardColumns(toolbarFilterColumns, filters)),
+    [filters],
+  )
+  const collection = useMemo(() => createExampleCollection(filteredCards), [filteredCards])
+
+  return (
+    <CollectionProvider
+      collection={collection}
+      defaultPreferences={{ groupBy: 'status', view: 'kanban' }}
+    >
+      {({ collection: providerCollection }) => (
+        <CollectionViewsSurface
+          collection={providerCollection}
+          filters={filters}
+          onClearFilters={() => setFilters(emptyBoardFilters)}
+          onToggleFilter={(key, value) =>
+            setFilters((currentFilters) => toggleBoardFilter(currentFilters, key, value))
+          }
+        />
+      )}
+    </CollectionProvider>
+  )
+}
+
 function visibleCardLabels(canvasElement: HTMLElement): string[] {
   return Array.from(
     canvasElement.querySelectorAll<HTMLElement>('[data-kanban-card-draggable]'),
@@ -934,6 +1119,24 @@ function draggableCard(canvasElement: HTMLElement, label: string): HTMLElement {
 
 function nextAnimationFrame(): Promise<void> {
   return new Promise((resolve) => window.requestAnimationFrame(() => resolve()))
+}
+
+async function selectCollectionPreference(
+  canvasElement: HTMLElement,
+  submenuName: string,
+  optionName: string,
+) {
+  const canvas = within(canvasElement)
+  const documentBody = within(canvasElement.ownerDocument.body)
+
+  await userEvent.click(canvas.getByRole('button', { name: 'Settings' }))
+  const submenu = await documentBody.findByRole('menuitem', { name: submenuName })
+  await expect(window.getComputedStyle(submenu).display).toBe('flex')
+  await userEvent.hover(submenu)
+  const option = await documentBody.findByRole('menuitemradio', { name: optionName })
+  await expect(window.getComputedStyle(option).display).toBe('grid')
+  await userEvent.click(option)
+  await userEvent.keyboard('{Escape}{Escape}')
 }
 
 const meta = {
@@ -1256,12 +1459,47 @@ export const ReadOnly: Story = {
   ),
 }
 
+export const ViewSettings: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Use Settings → View para alternar entre Grid e List. Em Settings → Grouping by, altere a projeção compartilhada entre Status e Assignee. Filter e a Toolbar permanecem disponíveis nas duas visualizações.',
+      },
+    },
+  },
+  render: () => <CollectionViewsStory />,
+}
+
+export const ViewSettingsAcceptance: Story = {
+  tags: ['!dev', '!autodocs'],
+  play: async ({ canvasElement }) => {
+    const surface = canvasElement.querySelector<HTMLElement>('[data-collection-view]')
+
+    await expect(surface).toHaveAttribute('data-collection-view', 'kanban')
+    await expect(surface).toHaveAttribute('data-collection-grouping', 'status')
+
+    await selectCollectionPreference(canvasElement, 'View', 'List')
+    await waitFor(() => expect(surface).toHaveAttribute('data-collection-view', 'list'))
+
+    await selectCollectionPreference(canvasElement, 'Grouping by', 'Assignee')
+    await waitFor(() => expect(surface).toHaveAttribute('data-collection-grouping', 'assignee'))
+
+    await selectCollectionPreference(canvasElement, 'View', 'Grid')
+    await waitFor(() => expect(surface).toHaveAttribute('data-collection-view', 'kanban'))
+
+    await selectCollectionPreference(canvasElement, 'Grouping by', 'Status')
+    await waitFor(() => expect(surface).toHaveAttribute('data-collection-grouping', 'status'))
+  },
+  render: () => <CollectionViewsStory />,
+}
+
 export const Toolbar: Story = {
   parameters: {
     docs: {
       description: {
         story:
-          'Teste manual: use Filter para combinar Status, Assignee, Creator, Priority, Labels e Date; selecione mais de uma opção no mesmo submenu para validar OR, combine submenus para validar AND e use Clear filters para restaurar os 15 cards. Em Settings, confira Detailed/Compact, Column width, Swimlanes e Visibility. A opção Expanded em Visibility é um mock visual do menu e não altera as colunas nesta story.',
+          'Teste manual: use Filter para combinar Status, Assignee, Creator, Priority, Labels e Date; selecione mais de uma opção no mesmo submenu para validar OR, combine submenus para validar AND e use Clear filters para restaurar os 15 cards. Em Settings, confira Grouping por Status/Assignee, Detailed/Compact, Column width, Swimlanes e Visibility. Grouping e Expanded são mocks visuais nesta story e ainda não alteram a projeção do Kanban.',
       },
     },
   },
@@ -1314,10 +1552,12 @@ export const Toolbar: Story = {
     await userEvent.click(settingsButton)
 
     await expect(await documentBody.findByText('Board')).toBeVisible()
+    await expect(await documentBody.findByText('Grouping')).toBeVisible()
     await expect(await documentBody.findByText('Layout')).toBeVisible()
     for (const setting of [
       'Details',
       'Notifications',
+      'Group by',
       'Cards',
       'Columns',
       'Swimlanes',
@@ -1328,6 +1568,16 @@ export const Toolbar: Story = {
       await expect(menuItem).toBeVisible()
       await expect(menuItem.querySelector('svg')).not.toBeNull()
     }
+
+    await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Group by' }))
+    await expect(await documentBody.findByText('Primary grouping')).toBeVisible()
+    await expect(documentBody.getByRole('menuitemradio', { name: 'Status' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+    await expect(documentBody.getByRole('menuitemradio', { name: 'Assignee' })).toBeVisible()
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(documentBody.queryByText('Primary grouping')).toBeNull())
 
     await userEvent.hover(documentBody.getByRole('menuitem', { name: 'Columns' }))
     await expect(await documentBody.findByText('Column width')).toBeVisible()

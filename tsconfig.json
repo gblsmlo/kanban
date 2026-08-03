@@ -3,6 +3,7 @@
     "allowImportingTsExtensions": true,
     "allowJs": false,
     "esModuleInterop": true,
+    "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
@@ -10,6 +11,8 @@
     "moduleDetection": "force",
     "moduleResolution": "Bundler",
     "noEmit": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
     "noUncheckedIndexedAccess": true,
     "paths": {
       "@/*": ["./src/*"]
