@@ -1,12 +1,12 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "tc96-kanban",
+  "name": "tc96-collection-views",
   "homepage": "https://github.com/gblsmlo/kanban#readme",
   "items": [
     {
-      "name": "kanban",
+      "name": "collection-views",
       "type": "registry:block",
-      "title": "Kanban and List",
+      "title": "Collection Views",
       "description": "Domain-neutral collection views for React applications.",
       "author": "Gabriel Melo",
       "dependencies": [
@@ -170,7 +170,7 @@
         "@coss/tooltip"
       ],
       "meta": {
-        "package": "@tc96/kanban",
+        "package": "@tc96/collection-views",
         "installPath": "@components/patterns/kanban",
         "aliases": {
           "components": "@/components",

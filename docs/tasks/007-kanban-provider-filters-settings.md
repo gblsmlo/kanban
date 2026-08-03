@@ -7,7 +7,7 @@
 A story `Kanban/Toolbar` valida a arquitetura de informação dos menus `Filter`
 e `Settings`, porém atualmente mantém estado, regras de filtragem e preferências
 de layout dentro do próprio exemplo. Isso comprova a experiência, mas não cria
-um contrato reutilizável para aplicações que instalam `@tc96/kanban` pelo npm ou
+um contrato reutilizável para aplicações que instalam `@tc96/collection-views` pelo npm ou
 pelo registry.
 
 O Kanban é um provider de UI para projetos de terceiros. Ele deve oferecer os
@@ -337,7 +337,7 @@ A entrega não estará concluída somente com stories. Cada PR atualizará:
 - changelog/release notes com versão, adições e ausência de breaking changes.
 
 Todos os exemplos devem compilar contra o entrypoint público
-`@tc96/kanban`; nenhum exemplo documentado pode importar arquivos internos.
+`@tc96/collection-views`; nenhum exemplo documentado pode importar arquivos internos.
 
 ## Critérios de aceite finais
 

@@ -1,6 +1,6 @@
 # Views `0.4.0`: List e Grouping
 
-**Status:** em implementação.
+**Status:** concluído.
 
 ## Estado atual
 
@@ -19,16 +19,16 @@ Primeiro vertical slice implementado:
   referência de grupos e linhas planas;
 - npm e registry expõem a mesma API inicial.
 
-Próxima fatia: integrar a coleção ao Kanban novo, adicionar troca de view e
-movimento otimista da List usando o adapter DnD existente. A versão permanece
-inalterada até a conclusão dos critérios da `0.4.0`.
+Entrega concluída na versão `0.4.0`: a coleção integra Kanban e List, a troca de
+view é persistível pelo consumer e o movimento do Kanban continua usando o
+adapter DnD existente.
 
 ## Objetivo
 
-Evoluir `@tc96/kanban` para um pacote de views sem renomear o repositório ou o
-pacote nesta versão. A `0.4.0` entregará Kanban e List sobre a mesma coleção e a
-mesma API de preferências. DataGrid faz parte da direção arquitetural, mas sua
-implementação e publicação ficam fora desta versão.
+Evoluir `@tc96/collection-views` para um pacote de views sem renomear o
+repositório. A `0.4.0` entregará Kanban e List sobre a mesma coleção e a
+mesma API de preferências. Outras views não fazem parte do contrato desta
+versão.
 
 O Settings ganha o grupo `Grouping`, com `Group by → Status | Assignee`.
 `Status` é o default para Kanban e List. A escolha define quais seções a view
@@ -65,7 +65,7 @@ Implementar conforme
 [`ADR-002`](../architecture/adr-002-collection-first-views.md): a fonte canônica
 das novas views é uma coleção plana com adapters obrigatórios de status e
 assignee. `KanbanColumnData` continua suportado por compatibilidade, mas não será
-usado para modelar List ou DataGrid.
+usado para modelar List ou uma view futura.
 
 ## API pública proposta
 
@@ -193,13 +193,12 @@ o pacote não grava em URL, storage ou backend.
 - Alternar grouping não remonta todo o board nem cria um segundo algoritmo de
   ordenação. Chaves de item e grupo permanecem estáveis dentro da projeção.
 
-## Direção para DataGrid
+## Limite de escopo para novas views
 
-DataGrid não será simulada nem exportada na `0.4.0`. A arquitetura reserva
-somente os contratos reutilizáveis: coleção, facets, filtros, preferências,
-seleção e callbacks. Colunas, sorting, pinning, resizing e virtualização serão
-decididos quando a DataGrid entrar no escopo, sem forçar esses conceitos sobre
-Kanban ou List.
+Nenhuma terceira view será simulada nem exportada na `0.4.0`. A arquitetura
+entrega somente os contratos reutilizáveis de coleção, facets, filtros,
+preferências e callbacks; uma nova view exigirá uma decisão própria de interação
+antes de entrar no escopo.
 
 ## Entrega por PR
 
@@ -238,7 +237,8 @@ Kanban ou List.
 
 - Publicar documentação final, migration guide e release notes.
 - Validar todos os exemplos apenas contra exports públicos.
-- Atualizar versão para `0.4.0` sem renomear repo ou pacote.
+- Atualizar versão para `0.4.0` e migrar o pacote para `@tc96/collection-views`,
+  mantendo o repositório `kanban`.
 - Rodar lint, typecheck, testes unitários, Storybook Chromium, build,
   Storybook build, registry parity e `npm pack --dry-run`.
 
@@ -280,15 +280,15 @@ Kanban ou List.
   visual provocada por cache obsoleto.
 - O movimento entre grupos informa campo e posição, preserva identidade e não
   duplica regras do DnD.
-- O Kanban legado permanece compatível; repo e pacote continuam com o nome
-  atual em `0.4.0`.
+- O Kanban legado permanece compatível; o repositório continua `kanban` e o
+  pacote publicado passa a ser `@tc96/collection-views` em `0.4.0`.
 - List possui Default, Read Only e Loading documentados e testados.
-- Não há API ou story de DataGrid até sua implementação real.
+- Não há API ou story de uma terceira view nesta versão.
 
 ## Fora de escopo
 
-- Renomear repositório, pacote npm ou registry item.
-- Implementar DataGrid na `0.4.0`.
+- Renomear o repositório.
+- Implementar uma terceira view na `0.4.0`.
 - Persistência automática, cache, autorização ou queries remotas.
 - Campos fixos no item do consumer.
 - Multi-assignee como múltiplos grupos simultâneos.
