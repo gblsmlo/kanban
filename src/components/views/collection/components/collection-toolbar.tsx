@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactElement } from 'react'
 
 import { Toolbar, ToolbarGroup } from '@/components/ui/toolbar'
-import { cn } from '../../lib/utils'
+import { cn } from '../../../../lib/utils'
 
 export type CollectionToolbarProps = ComponentProps<typeof Toolbar>
 export type CollectionToolbarGroupProps = ComponentProps<typeof ToolbarGroup>

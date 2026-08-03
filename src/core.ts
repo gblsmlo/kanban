@@ -1,4 +1,4 @@
-export { projectCollection } from './collection/lib/project-collection'
+export { projectCollection } from './components/views/collection/lib/project-collection'
 export type {
   CollectionDefinition,
   CollectionGroup,
@@ -7,7 +7,7 @@ export type {
   CollectionPreferences,
   CollectionView,
   CollectionViewMode,
-} from './collection/types'
+} from './components/views/collection/types'
 export {
   createCardDragId,
   createColumnDropId,
@@ -16,10 +16,10 @@ export {
   parseColumnId,
   projectKanbanColumns,
   resolveKanbanCardMove,
-} from './kanban/lib/drag-and-drop'
+} from './components/views/kanban/lib/drag-and-drop'
 export type {
   KanbanCardMove,
   KanbanColumnActions,
   KanbanColumnData,
   KanbanStageOption,
-} from './kanban/types'
+} from './components/views/kanban/types'

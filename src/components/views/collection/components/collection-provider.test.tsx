@@ -2,7 +2,7 @@ import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { useState } from 'react'
 import type { CollectionPreferences } from '../types'
 
-await import('../../test/dom')
+await import('../../../../test/dom')
 
 const { cleanup, fireEvent, render, screen } = await import('@testing-library/react')
 const { CollectionProvider, useCollectionPreferences } = await import('./collection-provider')

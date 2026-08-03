@@ -4,7 +4,7 @@ import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/react
 import { createCardDragId, createColumnDropId } from '../lib/drag-and-drop'
 import type { KanbanColumnData } from '../types'
 
-await import('../../test/dom')
+await import('../../../../test/dom')
 
 const { act, cleanup, renderHook } = await import('@testing-library/react')
 const { useKanbanDragAndDrop } = await import('./use-kanban-drag-and-drop')

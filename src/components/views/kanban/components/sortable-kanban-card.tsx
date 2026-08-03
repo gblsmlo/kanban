@@ -3,7 +3,7 @@ import { KeyboardSensor, PointerSensor } from '@dnd-kit/dom'
 import { useSortable } from '@dnd-kit/react/sortable'
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 import { useCallback, useLayoutEffect, useRef } from 'react'
-import { cn } from '../../lib/utils'
+import { cn } from '../../../../lib/utils'
 
 const ACTIONABLE_DESCENDANT_SELECTOR = [
   'a[href]:not([data-kanban-card-action])',

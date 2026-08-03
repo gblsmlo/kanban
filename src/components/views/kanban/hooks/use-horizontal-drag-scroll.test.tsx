@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 
-await import('../../test/dom')
+await import('../../../../test/dom')
 
 class TestPointerEvent extends window.MouseEvent {
   isPrimary: boolean

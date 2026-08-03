@@ -46,6 +46,10 @@ The npm build bundles their copy-owned source. The source registry instead
 declares the matching `@coss/*` items, installing them at
 `@/components/ui/*` through the consumer's `ui` alias.
 
+The source layout separates primitive UI from view surfaces: shared primitives
+live under `src/components/ui`, while collection orchestration and the Kanban
+and List views live under `src/components/views`.
+
 ## Installation
 
 Install the published package with your package manager:
