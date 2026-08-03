@@ -154,15 +154,13 @@ describe('Collection views registry', () => {
   test('ships collection and List APIs through the same registry item', () => {
     const publicApi = distributedItem.files.find((file) => file.path === 'src/index.ts')
     const collectionApi = distributedItem.files.find(
-      (file) => file.path === 'src/components/views/collection/index.ts',
+      (file) => file.path === 'src/collection/index.ts',
     )
     const collectionSettings = distributedItem.files.find(
-      (file) =>
-        file.path === 'src/components/views/collection/components/collection-settings-menu.tsx',
+      (file) => file.path === 'src/collection/components/collection-settings-menu.tsx',
     )
     const collectionViewOutlet = distributedItem.files.find(
-      (file) =>
-        file.path === 'src/components/views/collection/components/collection-view-outlet.tsx',
+      (file) => file.path === 'src/collection/components/collection-view-outlet.tsx',
     )
     const listApi = distributedItem.files.find(
       (file) => file.path === 'src/components/views/list/index.ts',
@@ -177,7 +175,7 @@ describe('Collection views registry', () => {
       (file) => file.path === 'src/components/views/list/components/list-item.tsx',
     )
 
-    expect(publicApi?.content).toContain("export * from './components/views/collection'")
+    expect(publicApi?.content).toContain("export * from './collection'")
     expect(publicApi?.content).toContain("export * from './components/views/list'")
     expect(collectionApi?.content).toContain('CollectionProvider')
     expect(collectionApi?.content).toContain('CollectionSettingsMenu')
@@ -207,7 +205,7 @@ describe('Collection views registry', () => {
 
   test('keeps direct Base UI imports inside the COSS ui source boundary', () => {
     const patternSources = [
-      'src/components/views/collection',
+      'src/collection',
       'src/components/views/kanban',
       'src/components/views/list',
     ].flatMap((directory) =>

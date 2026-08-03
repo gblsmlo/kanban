@@ -27,39 +27,39 @@
           "target": "@components/patterns/collection-views/index.ts"
         },
         {
-          "path": "src/components/views/collection/components/collection-provider.tsx",
+          "path": "src/collection/components/collection-provider.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/components/views/collection/components/collection-provider.tsx"
+          "target": "@components/patterns/collection-views/collection/components/collection-provider.tsx"
         },
         {
-          "path": "src/components/views/collection/components/collection-settings-menu.tsx",
+          "path": "src/collection/components/collection-settings-menu.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/components/views/collection/components/collection-settings-menu.tsx"
+          "target": "@components/patterns/collection-views/collection/components/collection-settings-menu.tsx"
         },
         {
-          "path": "src/components/views/collection/components/collection-toolbar.tsx",
+          "path": "src/collection/components/collection-toolbar.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/components/views/collection/components/collection-toolbar.tsx"
+          "target": "@components/patterns/collection-views/collection/components/collection-toolbar.tsx"
         },
         {
-          "path": "src/components/views/collection/components/collection-view-outlet.tsx",
+          "path": "src/collection/components/collection-view-outlet.tsx",
           "type": "registry:ui",
-          "target": "@components/patterns/collection-views/components/views/collection/components/collection-view-outlet.tsx"
+          "target": "@components/patterns/collection-views/collection/components/collection-view-outlet.tsx"
         },
         {
-          "path": "src/components/views/collection/index.ts",
+          "path": "src/collection/index.ts",
           "type": "registry:component",
-          "target": "@components/patterns/collection-views/components/views/collection/index.ts"
+          "target": "@components/patterns/collection-views/collection/index.ts"
         },
         {
-          "path": "src/components/views/collection/lib/project-collection.ts",
+          "path": "src/collection/lib/project-collection.ts",
           "type": "registry:lib",
-          "target": "@components/patterns/collection-views/components/views/collection/lib/project-collection.ts"
+          "target": "@components/patterns/collection-views/collection/lib/project-collection.ts"
         },
         {
-          "path": "src/components/views/collection/types.ts",
+          "path": "src/collection/types.ts",
           "type": "registry:lib",
-          "target": "@components/patterns/collection-views/components/views/collection/types.ts"
+          "target": "@components/patterns/collection-views/collection/types.ts"
         },
         {
           "path": "src/components/views/kanban/components/kanban-badge.tsx",

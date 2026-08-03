@@ -6,7 +6,7 @@ import { Fragment, type ReactNode, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Empty, EmptyDescription } from '@/components/ui/empty'
-import type { CollectionGroup } from '../../collection/types'
+import type { CollectionGroup } from '../../../../collection/types'
 
 export interface ListGroupActions {
   addLabel?: string

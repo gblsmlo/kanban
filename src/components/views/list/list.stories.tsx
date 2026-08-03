@@ -20,7 +20,7 @@ import {
   CollectionToolbarGroup,
   type CollectionDefinition,
   type CollectionPreferences,
-} from '../collection'
+} from '../../../collection'
 import {
   ListItem,
   ListItemAction,

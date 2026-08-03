@@ -1,4 +1,4 @@
-export { projectCollection } from './components/views/collection/lib/project-collection'
+export { projectCollection } from './collection/lib/project-collection'
 export type {
   CollectionDefinition,
   CollectionGroup,
@@ -7,7 +7,7 @@ export type {
   CollectionPreferences,
   CollectionView,
   CollectionViewMode,
-} from './components/views/collection/types'
+} from './collection/types'
 export {
   createCardDragId,
   createColumnDropId,

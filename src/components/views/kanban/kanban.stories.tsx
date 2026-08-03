@@ -48,7 +48,7 @@ import {
   type CollectionDefinition,
   CollectionViewOutlet,
   useCollectionPreferences,
-} from '../collection'
+} from '../../../collection'
 import {
   ListItem,
   ListItemContent,

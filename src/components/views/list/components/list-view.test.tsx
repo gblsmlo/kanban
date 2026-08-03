@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test } from 'bun:test'
 await import('../../../../test/dom')
 
 const { cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react')
-const { CollectionProvider } = await import('../../collection/components/collection-provider')
+const { CollectionProvider } = await import('../../../../collection/components/collection-provider')
 const { ListItem, ListItemHeader, ListItemTitle, ListView } = await import('../index')
 
 afterEach(cleanup)
