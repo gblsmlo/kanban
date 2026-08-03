@@ -8,6 +8,9 @@ import { defineConfig } from 'vitest/config'
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+  optimizeDeps: {
+    include: ['@dnd-kit/dom/sortable'],
+  },
   plugins: [tailwindcss()],
   test: {
     projects: [

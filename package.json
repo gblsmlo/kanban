@@ -1,6 +1,6 @@
 {
   "name": "@tc96/collection-views",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Domain-neutral collection views for React applications using COSS primitives and DnD Kit.",
   "type": "module",
   "license": "MIT",

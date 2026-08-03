@@ -71,9 +71,8 @@ export function useKanbanDragAndDrop<TCard>({
     (event: DragOverEvent) => {
       const { source, target } = event.operation
       const { type: sourceType } = source?.data ?? {}
-      const { type: targetType } = target?.data ?? {}
 
-      if (!onMoveCard || sourceType !== 'card' || targetType !== 'column') {
+      if (!onMoveCard || sourceType !== 'card' || !target) {
         return
       }
 
@@ -97,7 +96,11 @@ export function useKanbanDragAndDrop<TCard>({
       }
 
       const visibleColumns = optimisticColumnsRef.current ?? sourceColumns
-      const projectedColumns = projectKanbanColumns(visibleColumns, event, getCardDragId)
+      // A sortable drag can already have been projected during drag-over. Do
+      // not apply the same move a second time on drag-end (that would undo a
+      // same-column reorder such as 1,3,2 back to 1,2,3).
+      const projectedColumns =
+        optimisticColumnsRef.current ?? projectKanbanColumns(visibleColumns, event, getCardDragId)
       const move = resolveKanbanCardMove(sourceColumns, projectedColumns, event, getCardDragId)
 
       if (!move || !onMoveCard) {

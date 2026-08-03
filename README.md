@@ -2,7 +2,7 @@
 
 A domain-neutral collection view package for React applications built with
 [COSS](https://github.com/cosscom/coss) primitives, DnD Kit, and Tailwind CSS.
-Version `0.4.0` publishes the package as `@tc96/collection-views`. The
+Version `0.4.1` publishes the package as `@tc96/collection-views`. The
 repository remains named `kanban` for now, and the existing `Kanban*` component
 names remain available alongside `List*` components.
 

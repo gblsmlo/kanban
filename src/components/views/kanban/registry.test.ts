@@ -41,7 +41,7 @@ function findSourceFiles(directory: string): string[] {
 describe('Collection views registry', () => {
   test('publishes the collection views package and registry entry', () => {
     expect(packageManifest.name).toBe('@tc96/collection-views')
-    expect(packageManifest.version).toBe('0.4.0')
+    expect(packageManifest.version).toBe('0.4.1')
     expect(manifestItem?.name).toBe('collection-views')
     expect(distributedItem.name).toBe('collection-views')
     expect(packageManifest.exports?.['./registry']).toBe('./registry/collection-views.json')
