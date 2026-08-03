@@ -16,7 +16,7 @@ a card or row style.
 - Projection never mutates the items or option arrays supplied by the consumer.
 
 `projectCollection(collection, grouping)` is exported from the main package and
-`@tc96/kanban/core` for consumers that need the same deterministic projection
+`@tc96/collection-views/core` for consumers that need the same deterministic projection
 outside React.
 
 `CollectionSettingsMenu` uses the documented COSS Menu hierarchy and updates

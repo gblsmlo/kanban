@@ -5,6 +5,7 @@ import { join } from 'node:path'
 interface RegistryFile {
   content?: string
   path: string
+  target?: string
 }
 
 interface RegistryItem {
@@ -16,13 +17,18 @@ interface RegistryItem {
 
 interface PackageManifest {
   dependencies?: Record<string, string>
+  exports?: Record<string, unknown>
+  name?: string
+  version?: string
 }
 
 const manifest = JSON.parse(readFileSync('registry.json', 'utf8')) as {
   items: RegistryItem[]
 }
-const distributedItem = JSON.parse(readFileSync('registry/kanban.json', 'utf8')) as RegistryItem
-const manifestItem = manifest.items.find((item) => item.name === 'kanban')
+const distributedItem = JSON.parse(
+  readFileSync('registry/collection-views.json', 'utf8'),
+) as RegistryItem
+const manifestItem = manifest.items.find((item) => item.name === 'collection-views')
 const packageManifest = JSON.parse(readFileSync('package.json', 'utf8')) as PackageManifest
 
 function findSourceFiles(directory: string): string[] {
@@ -32,7 +38,19 @@ function findSourceFiles(directory: string): string[] {
   })
 }
 
-describe('Kanban registry', () => {
+describe('Collection views registry', () => {
+  test('publishes the collection views package and registry entry', () => {
+    expect(packageManifest.name).toBe('@tc96/collection-views')
+    expect(packageManifest.version).toBe('0.4.0')
+    expect(manifestItem?.name).toBe('collection-views')
+    expect(distributedItem.name).toBe('collection-views')
+    expect(packageManifest.exports?.['./registry']).toBe('./registry/collection-views.json')
+    expect(packageManifest.exports?.['./registry/kanban.json']).toBeUndefined()
+    expect(
+      distributedItem.files.every((file) => !file.target?.includes('/patterns/kanban')),
+    ).toBeTrue()
+  })
+
   test('installs every UI primitive from the official COSS registry', () => {
     const expectedDependencies = [
       '@coss/badge',
@@ -53,7 +71,7 @@ describe('Kanban registry', () => {
     expect(distributedItem.dependencies).toContain('lucide-react@1.28.0')
   })
 
-  test('keeps COSS primitives out of the Kanban pattern payload', () => {
+  test('keeps COSS primitives out of the collection views pattern payload', () => {
     const copiedPrimitivePaths = [
       'src/components/badge.tsx',
       'src/components/card.tsx',

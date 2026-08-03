@@ -1,7 +1,7 @@
 {
-  "name": "@tc96/kanban",
-  "version": "0.3.0",
-  "description": "Domain-neutral Kanban view for React applications using COSS primitives and DnD Kit.",
+  "name": "@tc96/collection-views",
+  "version": "0.4.0",
+  "description": "Domain-neutral collection views for React applications using COSS primitives and DnD Kit.",
   "type": "module",
   "license": "MIT",
   "author": "Gabriel Melo",
@@ -9,7 +9,10 @@
     "base-ui",
     "coss",
     "dnd-kit",
+    "collection",
+    "collection-views",
     "kanban",
+    "list",
     "react",
     "saas"
   ],
@@ -43,8 +46,8 @@
       "types": "./dist/core.d.ts",
       "import": "./dist/core.js"
     },
-    "./registry": "./registry/kanban.json",
-    "./registry/kanban.json": "./registry/kanban.json"
+    "./registry": "./registry/collection-views.json",
+    "./registry/collection-views.json": "./registry/collection-views.json"
   },
   "scripts": {
     "build": "bun run clean && bun build ./src/index.ts ./src/core.ts --outdir ./dist --target browser --format esm --packages external && tsc -p tsconfig.build.json",

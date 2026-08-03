@@ -1,9 +1,10 @@
-# Kanban
+# Collection Views
 
 A domain-neutral collection view package for React applications built with
 [COSS](https://github.com/cosscom/coss) primitives, DnD Kit, and Tailwind CSS.
-The package keeps its current name while the `0.4.0` API introduces List beside
-the existing Kanban.
+Version `0.4.0` publishes the package as `@tc96/collection-views`. The
+repository remains named `kanban` for now, and the existing `Kanban*` component
+names remain available alongside `List*` components.
 
 The package provides the interaction and presentation layer for SaaS board
 views. Your application remains responsible for business stages, permissions,
@@ -50,9 +51,9 @@ declares the matching `@coss/*` items, installing them at
 Install the published package with your package manager:
 
 ```bash
-pnpm add @tc96/kanban
-# or: bun add @tc96/kanban
-# or: npm install @tc96/kanban
+pnpm add @tc96/collection-views
+# or: bun add @tc96/collection-views
+# or: npm install @tc96/collection-views
 ```
 
 The consumer must already provide the peer dependencies:
@@ -61,11 +62,24 @@ The consumer must already provide the peer dependencies:
 pnpm add react react-dom @base-ui/react lucide-react tailwindcss
 ```
 
+### Migration from `0.3.x`
+
+Update the dependency and registry path:
+
+```bash
+bun remove @tc96/kanban
+bun add @tc96/collection-views
+bunx shadcn@latest add ./node_modules/@tc96/collection-views/registry/collection-views.json
+```
+
+`Kanban*` exports remain named after the Kanban view, while all source files are
+installed under the new `patterns/collection-views` namespace.
+
 ### COSS source location
 
-`@tc96/kanban` supports two installation modes. Use the npm package when you
-want to import it from `node_modules`. Use the bundled registry item when you
-want the source copied into the consuming app.
+`@tc96/collection-views` supports two installation modes. Use the npm package
+when you want to import it from `node_modules`. Use the bundled registry item
+when you want the source copied into the consuming app.
 
 Keep `ui` mapped to your primitive components and add `patterns` for TC96
 patterns. `patterns` is not a replacement for `ui`:
@@ -85,14 +99,14 @@ patterns. `patterns` is not a replacement for `ui`:
 After installing the package, add the local registry item:
 
 ```bash
-bun add @tc96/kanban
-bunx shadcn@latest add ./node_modules/@tc96/kanban/registry/kanban.json
+bun add @tc96/collection-views
+bunx shadcn@latest add ./node_modules/@tc96/collection-views/registry/collection-views.json
 ```
 
-The registry item targets `@components/patterns/kanban` for the pattern source
-and declares every required `@coss/*` primitive as a registry dependency. The
-shadcn CLI therefore installs visual primitives through `aliases.ui` while
-keeping only Kanban-specific source under `./components/patterns/kanban`.
+The registry item targets `@components/patterns/collection-views` and declares
+every required `@coss/*` primitive as a registry dependency, so the shadcn CLI
+installs visual primitives through `aliases.ui` while the package exposes both
+Kanban and List.
 
 Tailwind must scan the installed package and your theme must expose the standard
 COSS semantic tokens. The official
@@ -101,7 +115,7 @@ COSS semantic tokens. The official
 
 ```css
 @import "tailwindcss";
-@source "../node_modules/@tc96/kanban/dist";
+@source "../node_modules/@tc96/collection-views/dist";
 ```
 
 ## Quick start
@@ -114,7 +128,7 @@ import {
   KanbanView,
   type KanbanCardMove,
   type KanbanColumnData,
-} from "@tc96/kanban";
+} from "@tc96/collection-views";
 
 type RecordItem = {
   id: string;
@@ -182,7 +196,7 @@ import {
   ListItemHeader,
   ListItemTitle,
   ListView,
-} from "@tc96/kanban";
+} from "@tc96/collection-views";
 
 export function TaskList({ tasks, statuses, assignees }: Props) {
   return (
@@ -246,7 +260,7 @@ import {
   KanbanCardHeader,
   KanbanCardTitle,
   type KanbanCardDisplay,
-} from "@tc96/kanban";
+} from "@tc96/collection-views";
 
 export function TaskCard({
   display,
@@ -312,7 +326,7 @@ Use `KanbanCardSkeleton` while card data is unavailable. It preserves the card
 surface without creating placeholder domain records or enabling drag behavior:
 
 ```tsx
-import { KanbanCardSkeleton } from "@tc96/kanban";
+import { KanbanCardSkeleton } from "@tc96/collection-views";
 
 export function LoadingCard() {
   return <KanbanCardSkeleton label="Loading task" />;
@@ -340,7 +354,7 @@ For sortable cards with an interactive action, the first button or link is also
 the keyboard drag activator. Press `Space` to drag or `Enter` to keep the
 control's normal action without adding a second `Tab` stop.
 
-Use `@tc96/kanban/core` when a non-visual layer only needs the public types and
+Use `@tc96/collection-views/core` when a non-visual layer only needs the public types and
 the DnD Kit event-to-Kanban projection helpers.
 
 ## Ownership boundary

@@ -8,21 +8,21 @@ Proposed for `0.4.0`.
 
 Version `0.3.0` exposes a column-first Kanban API. That representation works for
 a board grouped by status, but it makes the column structure the canonical data
-model. The next version must also render a grouped List, expose `Status` and
-`Assignee` grouping, and leave a compatible seam for a future DataGrid.
+model. The next version must also render a grouped List and expose `Status` and
+`Assignee` grouping without introducing a second collection model.
 
 The package is a UI provider for third-party React projects. It cannot own a
 business entity shape, query cache, permissions, mutations, or persistence. The
-repository and npm package will keep the Kanban name during `0.4.x`; renaming is
-deferred until a later publication decision.
+repository remains named `kanban`, but the `0.4.0` npm publication is named
+`@tc96/collection-views` because the package now exposes more than Kanban.
 
 ## Options considered
 
 | Option | Benefits | Costs |
 | --- | --- | --- |
-| Keep columns canonical and convert them into List rows | Smallest initial change | Assignee grouping requires rebuilding columns outside the package; DataGrid receives an unnatural nested input; filters and settings remain Kanban-specific |
+| Keep columns canonical and convert them into List rows | Smallest initial change | Assignee grouping requires rebuilding columns outside the package; future views receive an unnatural nested input; filters and settings remain Kanban-specific |
 | Require items to contain fixed `status` and `assignee` properties | Simple internal access | Breaks domain neutrality and forces third-party models to match package-owned field names |
-| Use a flat collection plus required field adapters | One source supports Kanban, List, filters, and future DataGrid; consumer models remain arbitrary | Adds a projection layer and a compatibility adapter for the existing `columns` API |
+| Use a flat collection plus required field adapters | One source supports Kanban, List, filters, and future views; consumer models remain arbitrary | Adds a projection layer and a compatibility adapter for the existing `columns` API |
 
 ## Decision
 
@@ -80,9 +80,9 @@ existing `KanbanCardMove` remains available through an adapter.
 compositions use `CollectionProvider`, `CollectionToolbar`,
 `CollectionViewOutlet`, and `ListView`. The provider render prop is the typed
 boundary for collection items; the shared context contains only non-generic
-preferences. The future DataGrid will consume the same collection and
-preferences, but no DataGrid component or dead `datagrid` view value is
-exported in `0.4.0`.
+preferences. No third view or dead view value is exported in `0.4.0`. A future
+view must consume the same collection and preference boundary rather than
+introduce a parallel data model.
 
 ## Trade-offs
 
@@ -96,9 +96,8 @@ exported in `0.4.0`.
 - Grouping changes can alter every visible section. Stable item keys, group keys,
   and memoized projections are therefore required; changing grouping must not
   mutate the input collection or reset consumer-owned item state.
-- The package name is temporarily narrower than its capability. Documentation
-  must call this out, and no internal directory or public type should assume the
-  future package name.
+- The package name now describes the collection abstraction. `Kanban*` names
+  remain the semantic component names for the Kanban view.
 
 ## Consequences
 
@@ -107,7 +106,7 @@ exported in `0.4.0`.
 - Kanban and List share filters, grouping, visibility, loading, empty-state, and
   persistence semantics.
 - Third-party item types do not need to implement package-owned interfaces.
-- DataGrid can be added without another canonical data model.
+- Future views can be added without another canonical data model.
 - `Status` remains the default grouping for both implemented views while
   `Assignee` is a controlled or uncontrolled preference.
 
@@ -117,7 +116,7 @@ exported in `0.4.0`.
 - Drag-and-drop grouped by assignee requires a consumer callback to change both
   membership and order; the package cannot infer the domain mutation.
 - The generic provider and public naming need careful documentation while the
-  package is still published as `@tc96/kanban`.
+  package is published as `@tc96/collection-views`.
 
 ### Mitigation
 
@@ -130,6 +129,5 @@ exported in `0.4.0`.
 ## Revisit triggers
 
 - A consumer needs one item displayed in multiple assignee groups.
-- DataGrid requires a field schema richer than the status/assignee facets.
-- A published package rename is scheduled and compatibility export paths can be
-  designed with actual consumer migration evidence.
+- A third view requires a distinct interaction model or field schema beyond the
+  current status/assignee facets.
