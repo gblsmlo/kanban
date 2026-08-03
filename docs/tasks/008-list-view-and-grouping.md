@@ -280,8 +280,8 @@ antes de entrar no escopo.
   visual provocada por cache obsoleto.
 - O movimento entre grupos informa campo e posição, preserva identidade e não
   duplica regras do DnD.
-- O Kanban legado permanece compatível; o repositório continua `kanban` e o
-  pacote publicado passa a ser `@tc96/collection-views` em `0.4.0`.
+- O repositório continua `kanban` e o pacote publicado é
+  `@tc96/collection-views` em `0.4.0`.
 - List possui Default, Read Only e Loading documentados e testados.
 - Não há API ou story de uma terceira view nesta versão.
 

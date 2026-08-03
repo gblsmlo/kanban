@@ -5,6 +5,7 @@ import { join } from 'node:path'
 interface RegistryFile {
   content?: string
   path: string
+  target?: string
 }
 
 interface RegistryItem {
@@ -44,6 +45,10 @@ describe('Collection views registry', () => {
     expect(manifestItem?.name).toBe('collection-views')
     expect(distributedItem.name).toBe('collection-views')
     expect(packageManifest.exports?.['./registry']).toBe('./registry/collection-views.json')
+    expect(packageManifest.exports?.['./registry/kanban.json']).toBeUndefined()
+    expect(
+      distributedItem.files.every((file) => !file.target?.includes('/patterns/kanban')),
+    ).toBeTrue()
   })
 
   test('installs every UI primitive from the official COSS registry', () => {

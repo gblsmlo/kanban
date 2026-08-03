@@ -96,8 +96,8 @@ introduce a parallel data model.
 - Grouping changes can alter every visible section. Stable item keys, group keys,
   and memoized projections are therefore required; changing grouping must not
   mutate the input collection or reset consumer-owned item state.
-- The package name now describes the collection abstraction. Internal `Kanban*`
-  names remain intentionally stable for component compatibility.
+- The package name now describes the collection abstraction. `Kanban*` names
+  remain the semantic component names for the Kanban view.
 
 ## Consequences
 
@@ -116,8 +116,7 @@ introduce a parallel data model.
 - Drag-and-drop grouped by assignee requires a consumer callback to change both
   membership and order; the package cannot infer the domain mutation.
 - The generic provider and public naming need careful documentation while the
-  package is published as `@tc96/collection-views`; the repository name and
-  internal `Kanban*` component names remain compatible for this migration.
+  package is published as `@tc96/collection-views`.
 
 ### Mitigation
 

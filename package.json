@@ -47,8 +47,7 @@
       "import": "./dist/core.js"
     },
     "./registry": "./registry/collection-views.json",
-    "./registry/collection-views.json": "./registry/collection-views.json",
-    "./registry/kanban.json": "./registry/collection-views.json"
+    "./registry/collection-views.json": "./registry/collection-views.json"
   },
   "scripts": {
     "build": "bun run clean && bun build ./src/index.ts ./src/core.ts --outdir ./dist --target browser --format esm --packages external && tsc -p tsconfig.build.json",

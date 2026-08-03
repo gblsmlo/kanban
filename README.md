@@ -64,7 +64,7 @@ pnpm add react react-dom @base-ui/react lucide-react tailwindcss
 
 ### Migration from `0.3.x`
 
-Update the dependency and registry path; component imports remain compatible:
+Update the dependency and registry path:
 
 ```bash
 bun remove @tc96/kanban
@@ -72,8 +72,8 @@ bun add @tc96/collection-views
 bunx shadcn@latest add ./node_modules/@tc96/collection-views/registry/collection-views.json
 ```
 
-`Kanban*` exports and the existing `patterns/kanban` source namespace remain
-available, while new collection APIs are published from the renamed package.
+`Kanban*` exports remain named after the Kanban view, while all source files are
+installed under the new `patterns/collection-views` namespace.
 
 ### COSS source location
 
@@ -103,10 +103,10 @@ bun add @tc96/collection-views
 bunx shadcn@latest add ./node_modules/@tc96/collection-views/registry/collection-views.json
 ```
 
-The registry item keeps the existing `@components/patterns/kanban` source
-namespace for component-path compatibility. It declares every required
-`@coss/*` primitive as a registry dependency, so the shadcn CLI installs visual
-primitives through `aliases.ui` while the package exposes both Kanban and List.
+The registry item targets `@components/patterns/collection-views` and declares
+every required `@coss/*` primitive as a registry dependency, so the shadcn CLI
+installs visual primitives through `aliases.ui` while the package exposes both
+Kanban and List.
 
 Tailwind must scan the installed package and your theme must expose the standard
 COSS semantic tokens. The official
